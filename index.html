@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#264864" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <!-- App icon for iOS Add to Home Screen (optional placeholder; replace with your PNG if desired) -->
+  <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAANklEQVR4Xu3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwBMAAadw3Y0AAAAASUVORK5CYII=" />
+  <title>Outfit Planner — iPhone Web App</title>
+  <style>
+    :root{ --bg:#fafafa; --card:#fff; --ink:#0f172a; --muted:#64748b; --accent:#264864; --line:#e2e8f0; }
+    *{ box-sizing: border-box; }
+    body{ margin:0; background:var(--bg); color:var(--ink); font:16px system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    header{ position:sticky; top:0; z-index:5; background:var(--card); border-bottom:1px solid var(--line); padding:10px 12px; }
+    h1{ font-size:18px; margin:0; }
+    .sub{ color:var(--muted); font-size:12px; }
+
+    /* Phone canvas — iPhone 16 Pro logical size ~402×874 CSS px */
+    .wrap{ padding:10px 10px 28px; margin:0 auto; }
+    .phone{ max-width:402px; }
+    @supports (height: 100dvh){ .phone{ min-height:100dvh; } }
+    @supports not (height: 100dvh){ .phone{ min-height:100vh; } }
+
+    /* Dates row */
+    .dates{ display:flex; gap:8px; }
+.dates-scroller{ overflow-x:auto; -webkit-overflow-scrolling:touch; padding:2px; }
+.dates-scroller::-webkit-scrollbar{ display:none; }
+    .date-btn{ border:1px solid var(--line); background:#fff; border-radius:999px; padding:8px 10px; text-align:center; font-size:14px; cursor:pointer; white-space:nowrap; }
+    .date-btn.active{ border-color:var(--accent); box-shadow:0 0 0 2px rgba(38,72,100,.08) inset; }
+
+    /* Activity buttons — carousel with swipe */
+    .acts-wrap{ position:relative; margin:10px 0 12px; }
+    .acts{ display:flex; gap:8px; overflow-x:auto; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory; padding:2px 40px; }
+    .act-btn{ border:1px solid var(--line); background:#fff; border-radius:12px; padding:8px; cursor:pointer; min-height:88px; display:grid; grid-template-rows:auto auto auto; align-items:center; justify-items:center; text-align:center; flex:0 0 auto; min-width:160px; max-width:240px; scroll-snap-align:start; }
+    .act-btn .title{ font-weight:600; font-size:13px; width:100%; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; line-clamp:2; -webkit-box-orient:vertical; }
+    .act-btn .tag{ font-size:11px; color:#fff; padding:2px 8px; border-radius:999px; display:inline-block; }
+    .act-btn .time{ color:var(--muted); font-size:12px; }
+    .act-btn.active{ border-color:var(--accent); box-shadow:0 0 0 2px rgba(38,72,100,.08) inset; }
+
+    /* Tag colors */
+    .k-travel{ background:#3b82f6; }
+    .k-hotel{ background:#8b5cf6; }
+    .k-activity{ background:#10b981; }
+    .k-breakfast{ background:#f59e0b; }
+    .k-lunch{ background:#fb923c; }
+    .k-dinner{ background:#f43f5e; }
+
+    .scroll-btn{ position:absolute; top:50%; transform:translateY(-50%); z-index:2; display:none; border:1px solid var(--line); background:#fff; border-radius:10px; padding:8px 10px; }
+    #actsPrev{ left:0; }
+    #actsNext{ right:0; }
+    .scroll-fade{ position:relative; }
+    .scroll-fade::before, .scroll-fade::after{ content:""; position:absolute; top:0; bottom:0; width:30px; pointer-events:none; }
+    .scroll-fade::before{ left:0; background:linear-gradient(90deg,var(--bg),transparent); }
+    .scroll-fade::after{ right:0; background:linear-gradient(270deg,var(--bg),transparent); }
+
+    /* Card + hero */
+    .section{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px; margin:12px 0; box-shadow:0 1px 0 rgba(15,23,42,.03); }
+    .hero{ position:relative; width:100%; aspect-ratio:16/10; background:#f1f5f9; overflow:hidden; border-radius:12px; }
+    .hero img{ width:100%; height:100%; object-fit:cover; display:block; }
+    .hero .dot{ width:6px; height:6px; border-radius:999px; background:#cbd5e1; }
+    .hero .dot.active{ background:var(--accent); }
+
+    /* Details + notes */
+    .row{ display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center; }
+    .note-wrap{ display:grid; gap:8px; }
+    .note{ width:100%; min-height:90px; resize:vertical; padding:10px; border:1px solid var(--line); border-radius:10px; background:#fff; }
+    .tools{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .btn{ padding:8px 10px; border:1px solid var(--line); background:#fff; border-radius:10px; cursor:pointer; }
+    .btn:active{ transform:translateY(1px); }
+    .thumbs{ display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; }
+    .thumb{ position:relative; background:#f1f5f9; border-radius:10px; overflow:hidden; aspect-ratio:1/1; }
+    .thumb img{ width:100%; height:100%; object-fit:cover; }
+    .del{ position:absolute; top:6px; right:6px; background:rgba(0,0,0,.6); color:#fff; border:none; border-radius:999px; width:26px; height:26px; cursor:pointer; }
+
+    .swipe-hint{ text-align:center; color:var(--muted); font-size:12px; margin-top:6px; }
+    .slide{ animation:slideIn .25s ease; }
+    @keyframes slideIn{ from{ opacity:.6; transform:translateX(var(--dir,0)); } to{ opacity:1; transform:translateX(0); } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Outfit Planner</h1>
+    <div class="sub">Pick a date → pick an activity → add notes & outfit photos</div>
+  </header>
+
+  <div class="wrap phone">
+    <!-- Dates -->
+    <div class="section" style="padding:8px; background:transparent; border:none; box-shadow:none; margin:0 0 8px;">
+      <div class="dates-scroller">
+        <div id="dates" class="dates"></div>
+      </div>
+    </div>
+
+    <!-- Activity buttons (swipeable) -->
+    <div class="section" style="padding:0; background:transparent; border:none; box-shadow:none; margin:0 0 8px;">
+      <div class="acts-wrap scroll-fade">
+        <button id="actsPrev" class="scroll-btn" aria-label="Prev">‹</button>
+        <div id="acts" class="acts"></div>
+        <button id="actsNext" class="scroll-btn" aria-label="Next">›</button>
+      </div>
+    </div>
+
+    <!-- Single-photo hero (no heading) -->
+    <section class="section" style="padding:10px;">
+      <div id="hero" class="hero">
+        <img id="heroImg" alt="Activity photo" />
+        <button id="heroPrev" aria-label="Previous photo" class="scroll-btn" style="left:6px; top:50%; transform:translateY(-50%);">‹</button>
+        <button id="heroNext" aria-label="Next photo" class="scroll-btn" style="right:6px; top:50%; transform:translateY(-50%);">›</button>
+        <div id="heroDots" style="position:absolute; bottom:6px; left:0; right:0; display:flex; gap:6px; justify-content:center;"></div>
+      </div>
+      <div class="swipe-hint">Swipe photo or use arrows</div>
+    </section>
+
+    <!-- Details + notes -->
+    <section class="section">
+      <div class="row">
+        <div>
+          <div id="actTitle" class="title" style="font-size:16px; font-weight:600;"></div>
+          <div id="actSub" class="sub"></div>
+        </div>
+        <span id="actTag" class="tag" style="display:inline-block; background:#e2e8f0; color:#0f172a; padding:4px 8px; border-radius:999px; font-size:12px;"></span>
+      </div>
+      <div class="note-wrap" style="margin-top:10px;">
+        <textarea id="note" class="note" placeholder="Write outfit idea / links / reminders…"></textarea>
+        <div class="tools">
+          <button id="addPhotoBtn" class="btn">Add outfit photo</button>
+          <input id="file" type="file" accept="image/*" capture="environment" style="display:none" />
+        </div>
+        <div id="thumbs" class="thumbs"></div>
+      </div>
+    </section>
+  </div>
+
+<script>
+// ------------------ Sample itinerary (swap in your JSON later) ------------------
+const TRIP = {
+  days: {
+    "2025-09-28": { label: "Sep 28", activities: [
+      { id:"land-pmi", time:"10:00", kind:"travel", title:"Land at Palma (PMI)", sub:"Arrival", photos:["./media/palma_landing.jpg"] },
+      { id:"drive-santanyi", time:"11:00", kind:"travel", title:"Drive to Santanyí", sub:"Hotel transfer", photos:[
+        "./media/santanyi.webp",
+        "./media/santanyi_2.jpg",
+        "./media/santanyi_3.jpg"
+      ] },
+      { id:"checkin-ferrereta", time:"12:00", kind:"hotel", title:"Check‑in: Can Ferrereta", sub:"Welcome!", photos:[
+        "./media/can_ferrereta_2.jpg",
+        "./media/ferrereta_room_1.jpg",
+        "./media/ferrereta_room_2.jpg",
+        "./media/ferrereta_room_3.jpg"
+      ] },
+      { id:"pool-spa", time:"13:00", kind:"activity", title:"Pool & Spa", sub:"Relax at hotel", photos:["./media/can_ferrereta.jpg"] },
+      { id:"walk-town", time:"16:00", kind:"activity", title:"Walk Santanyí town", sub:"Stroll & photos", photos:["./media/santanyi_town.jpg"] },
+      { id:"manique", time:"20:30", kind:"dinner", title:"Dinner: Manique", sub:"Brazilian & Mallorcan", photos:["./media/manique.jpg"] }
+    ]},
+
+    "2025-09-29": { label: "Sep 29", activities: [
+      { id:"breakfast-1", time:"08:00", kind:"breakfast", title:"Breakfast at Can Ferrereta", photos:["./media/can_ferrereta_breakfast.jpg"] },
+      { id:"beach-hopping-1", time:"09:30", kind:"activity", title:"Beach hopping", sub:"Mondragó • Burgit • S’amarador", photos:[
+        "./media/mondrago.webp",
+        "./media/burgit.jpg",
+        "./media/aramador.jpg"
+      ] },
+      { id:"tacos-patron", time:"12:00", kind:"lunch", title:"Lunch: Tacos Patrón", photos:["./media/patron.jpg"] },
+      { id:"marina", time:"13:00", kind:"activity", title:"Walk Cala d’Or marina", photos:["./media/calador.webp"] },
+      { id:"cap-rocat", time:"18:00", kind:"dinner", title:"Sea Club at Cap Rocat", photos:[
+        "./media/rocat1.jpg",
+        "./media/rocat2.jpg",
+        "./media/rocat3.jpg"
+      ] }
+    ]},
+
+    "2025-09-30": { label: "Sep 30", activities: [
+      { id:"breakfast-2", time:"08:00", kind:"breakfast", title:"Breakfast at hotel", photos:["./media/can_ferrereta_breakfast.jpg"] },
+      { id:"beach-hopping-2", time:"09:00", kind:"activity", title:"Beach hopping", sub:"Caló del Moro • Cala Llombards", photos:[
+        "./media/moro.jpg",
+        "./media/llombards.jpg"
+      ] },
+      { id:"lunch-choice", time:"13:00", kind:"lunch", title:"Lunch choice", sub:"Café Drac or Pura Vida", photos:["./media/drac.jpg","./media/vida.jpg"] },
+      { id:"spa-pool", time:"15:00", kind:"activity", title:"Spa & pool", photos:["./media/can_ferrereta.jpg"] },
+      { id:"ocre", time:"20:00", kind:"dinner", title:"Dinner at Ocre", photos:["./media/ocre.jpg"] }
+    ]},
+
+    "2025-10-01": { label: "Oct 1", activities: [
+      { id:"breakfast-3", time:"08:00", kind:"breakfast", title:"Breakfast", photos:["./media/can_ferrereta_breakfast.jpg"] },
+      { id:"market", time:"09:00", kind:"activity", title:"Santanyí Market walk", photos:["./media/market.webp"] },
+      { id:"drive-four-seasons", time:"11:00", kind:"travel", title:"Drive to Four Seasons Formentor", photos:[
+        "./media/fourseasons_1.jpg",
+        "./media/fourseasons_2.jpg",
+        "./media/fourseasons_room.jpg"
+      ] },
+      { id:"checkin-four-seasons", time:"12:30", kind:"hotel", title:"Check-in & room", photos:["./media/fourseasons_3.jpg"] },
+      { id:"shima", time:"20:00", kind:"dinner", title:"Dinner at Shima", photos:["./media/shima.jpg"] }
+    ]},
+
+    "2025-10-02": { label: "Oct 2", activities: [
+      { id:"breakfast-4", time:"08:00", kind:"breakfast", title:"Breakfast", photos:["./media/mel.jpg"] },
+      { id:"alcudia-old", time:"10:00", kind:"activity", title:"Alcúdia Old Town", sub:"Walk & Explore", photos:["./media/oldtown.jpg"] },
+      { id:"port-alcudia", time:"11:30", kind:"activity", title:"Port d’Alcúdia", sub:"Walk & explore", photos:["./media/portalcudia.jpg"] },
+      { id:"lunch-alcudia", time:"12:30", kind:"lunch", title:"Lunch choice", sub:"o96 or La Terraza", photos:["./media/o96.jpg","./media/terraza.jpg"] },
+      { id:"back-hotel", time:"15:00", kind:"activity", title:"Back to hotel" },
+      { id:"dinner-tbd-1", time:"20:00", kind:"dinner", title:"Dinner TBD" }
+    ]},
+
+    "2025-10-03": { label: "Oct 3", activities: [
+      { id:"breakfast-5", time:"08:00", kind:"breakfast", title:"Breakfast at hotel", photos:["./media/mel.jpg"] },
+      { id:"relax-hotel", time:"10:00", kind:"activity", title:"Relax at hotel", photos:["./media/fourseasons_4.jpg"] },
+      { id:"llum-sal", time:"12:30", kind:"lunch", title:"LLUM I SAL (beachfront)", photos:["./media/sal.jpg"] },
+      { id:"sunset-formentor", time:"18:45", kind:"activity", title:"Sunset at Mirador Cap de Formentor", photos:["./media/lighthouse.jpg"] },
+      { id:"dinner-tbd-2", time:"20:30", kind:"dinner", title:"Dinner TBD" }
+    ]},
+
+    "2025-10-04": { label: "Oct 4", activities: [
+      { id:"breakfast-6", time:"07:00", kind:"breakfast", title:"Breakfast" },
+      { id:"puro-drop", time:"07:30", kind:"travel", title:"Drive to Palma – Puro Grand (drop bags)", photos:["./media/puro.jpg","./media/puro2.jpg"] },
+      { id:"drive-calanova", time:"09:00", kind:"activity", title:"Drive to Calanova Marina", photos:["./media/calanova.jpg"] },
+      { id:"boat-charter", time:"10:00", kind:"activity", title:"Private boat charter (10–2)", photos:["./media/blade.jpg"] },
+      { id:"illeta", time:"14:00", kind:"lunch", title:"Lunch at Restaurante Illeta", photos:["./media/illeta.avif"] },
+      { id:"back-puro", time:"16:00", kind:"activity", title:"Back to Puro Grand", photos:["./media/puro2.jpg"] },
+      { id:"explore-palma", time:"18:00", kind:"activity", title:"Explore Palma", photos:["./media/palmacity.jpg"] },
+      { id:"el-camino", time:"21:30", kind:"dinner", title:"Dinner at El Camino (tapas)", photos:["./media/camino.jpg"] }
+    ]},
+
+    "2025-10-05": { label: "Oct 5", activities: [
+      { id:"to-pmi", time:"07:30", kind:"travel", title:"To Palma airport", photos:["./media/no.webp"] },
+      { id:"fly-ewr", time:"10:30", kind:"travel", title:"Flight PMI → EWR", photos:["./media/meme2.png"] }
+    ]}
+  }
+};
+
+// ------------------ IndexedDB (persist notes + outfit photos) ------------------
+const DB_NAME = 'outfit-planner-v2';
+const STORE = 'outfits';
+let db;
+function openDB(){
+  return new Promise((resolve, reject)=>{
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = ()=>{ const db = req.result; if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath:'key' }); };
+    req.onsuccess = ()=> resolve(req.result);
+    req.onerror = ()=> reject(req.error);
+  });
+}
+async function putEntry(entry){ db = db || await openDB(); return new Promise((res,rej)=>{ const tx=db.transaction(STORE,'readwrite'); tx.objectStore(STORE).put(entry); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); }); }
+async function getEntry(key){ db = db || await openDB(); return new Promise((res,rej)=>{ const tx=db.transaction(STORE,'readonly'); const rq=tx.objectStore(STORE).get(key); rq.onsuccess=()=>res(rq.result||null); rq.onerror=()=>rej(rq.error); }); }
+async function deletePhoto(key, id){ const rec = await getEntry(key) || { key, note:'', photos:[] }; rec.photos=(rec.photos||[]).filter(p=>p.id!==id); await putEntry(rec); }
+
+// ------------------ State ------------------
+const dayIds = Object.keys(TRIP.days);
+let activeDay = dayIds[0];
+let activeIdx = 0;
+
+// DOM
+const $dates = document.querySelector('#dates');
+const $acts = document.querySelector('#acts');
+const $actsPrev = document.querySelector('#actsPrev');
+const $actsNext = document.querySelector('#actsNext');
+const $hero = document.querySelector('#hero');
+const $heroImg = document.querySelector('#heroImg');
+const $heroPrev = document.querySelector('#heroPrev');
+const $heroNext = document.querySelector('#heroNext');
+const $heroDots = document.querySelector('#heroDots');
+const $actTitle = document.querySelector('#actTitle');
+const $actSub = document.querySelector('#actSub');
+const $actTag = document.querySelector('#actTag');
+const $note = document.querySelector('#note');
+const $thumbs = document.querySelector('#thumbs');
+const $file = document.querySelector('#file');
+const $addPhotoBtn = document.querySelector('#addPhotoBtn');
+
+function kindLabel(k){ return ({travel:'Travel',hotel:'Hotel',activity:'Activity',breakfast:'Breakfast',lunch:'Lunch',dinner:'Dinner'})[k]||'Activity'; }
+function kindClass(k){ return ({travel:'k-travel',hotel:'k-hotel',activity:'k-activity',breakfast:'k-breakfast',lunch:'k-lunch',dinner:'k-dinner'})[k]||'k-activity'; }
+function keyFor(dayId, actId){ return `${dayId}|${actId}`; }
+
+// ------------------ Rendering ------------------
+function renderDates(){
+  $dates.innerHTML = '';
+  dayIds.forEach(id=>{
+    const btn = document.createElement('button');
+    btn.className = 'date-btn' + (id===activeDay?' active':'');
+    btn.textContent = TRIP.days[id].label || id;
+    btn.onclick = ()=>{ activeDay=id; activeIdx=0; renderAll(); };
+    $dates.appendChild(btn);
+  });
+}
+
+function renderActs(){
+  const el = $acts; el.innerHTML = '';
+  const list = TRIP.days[activeDay].activities;
+  list.forEach((a,idx)=>{
+    const b = document.createElement('button');
+    b.className = 'act-btn' + (idx===activeIdx?' active':'');
+    b.innerHTML = `<div class="title">${a.title}</div><span class="tag ${kindClass(a.kind)}">${kindLabel(a.kind)}</span><div class="time">${a.time}</div>`;
+    b.onclick = ()=>{ activeIdx=idx; renderContent(0); renderActs(); centerActiveBtn(); };
+    el.appendChild(b);
+  });
+  setupActsScrollControls();
+  centerActiveBtn();
+}
+
+async function renderContent(dir=0){
+  const list = TRIP.days[activeDay].activities;
+  const a = list[activeIdx];
+  $actTitle.textContent = `${a.time} • ${a.title}`;
+  $actSub.textContent = a.sub || '';
+  $actTag.textContent = kindLabel(a.kind);
+  $actTag.className = 'tag ' + kindClass(a.kind);
+
+  setupHero(a.photos||[]);
+
+  const key = keyFor(activeDay, a.id);
+  const rec = await getEntry(key) || { key, note:'', photos:[] };
+  $note.value = rec.note || '';
+  renderThumbs(key, rec.photos||[]);
+
+  const main = document.querySelector('.wrap');
+  main.style.setProperty('--dir', dir<0?'-6%':dir>0?'6%':'0');
+  main.classList.remove('slide'); void main.offsetWidth; main.classList.add('slide');
+}
+
+function renderThumbs(key, photos){
+  $thumbs.innerHTML = '';
+  if (!photos.length){
+    $thumbs.innerHTML = `<div class="sub" style="grid-column:1/-1">No outfit photos yet.</div>`; return;
+  }
+  for (const p of photos){
+    const cell = document.createElement('div'); cell.className='thumb';
+    const img = document.createElement('img'); img.src = URL.createObjectURL(p.blob); img.loading='lazy'; img.alt='Outfit photo';
+    const del = document.createElement('button'); del.className='del'; del.textContent='×';
+    del.onclick = async ()=>{ URL.revokeObjectURL(img.src); await deletePhoto(key, p.id); renderContent(); };
+    cell.appendChild(img); cell.appendChild(del); $thumbs.appendChild(cell);
+  }
+}
+
+// ------------------ Photo hero (single-image carousel) ------------------
+let photoIdx = 0;
+function setupHero(photos){
+  const list = Array.isArray(photos)? photos : [];
+  photoIdx = 0;
+  $heroPrev.style.display = list.length>1 ? 'block' : 'none';
+  $heroNext.style.display = list.length>1 ? 'block' : 'none';
+  $heroDots.innerHTML = '';
+  list.forEach((_,i)=>{ const d=document.createElement('div'); d.className='dot'+(i===0?' active':''); $heroDots.appendChild(d); });
+  const paint = ()=>{
+    if (!list.length){ $heroImg.removeAttribute('src'); $heroDots.innerHTML=''; return; }
+    $heroImg.src = list[photoIdx];
+    [...$heroDots.children].forEach((dot,i)=>{ dot.classList.toggle('active', i===photoIdx); });
+  };
+  paint();
+  $heroPrev.onclick = ()=>{ if (!list.length) return; photoIdx=(photoIdx-1+list.length)%list.length; paint(); };
+  $heroNext.onclick = ()=>{ if (!list.length) return; photoIdx=(photoIdx+1)%list.length; paint(); };
+  // Swipe on hero
+  let hx=null, hy=null;
+  $hero.addEventListener('touchstart', e=>{ const t=e.touches[0]; hx=t.clientX; hy=t.clientY; }, {passive:true});
+  $hero.addEventListener('touchend', e=>{ if(hx==null) return; const t=e.changedTouches[0]; const dx=t.clientX-hx; const dy=t.clientY-hy; hx=hy=null; if (Math.abs(dx)>40 && Math.abs(dy)<80){ if (dx<0) $heroNext.click(); else $heroPrev.click(); } }, {passive:true});
+}
+
+// ------------------ Save notes & photos ------------------
+let saveTimer;
+$note.addEventListener('input', async ()=>{
+  clearTimeout(saveTimer);
+  const a = TRIP.days[activeDay].activities[activeIdx];
+  const key = keyFor(activeDay, a.id);
+  const rec = await getEntry(key) || { key, note:'', photos:[] };
+  saveTimer = setTimeout(async ()=>{ rec.note = $note.value; await putEntry(rec); }, 300);
+});
+
+$addPhotoBtn.addEventListener('click', ()=> $file.click());
+$file.addEventListener('change', async ()=>{
+  const f = $file.files && $file.files[0]; if (!f) return;
+  const blob = await downscaleImage(f, 1600);
+  const a = TRIP.days[activeDay].activities[activeIdx];
+  const key = keyFor(activeDay, a.id);
+  const rec = await getEntry(key) || { key, note:'', photos:[] };
+  rec.photos.unshift({ id: crypto.randomUUID(), blobType: blob.type, blob });
+  await putEntry(rec);
+  renderContent();
+  $file.value = '';
+});
+
+// ------------------ Swipe navigation (activities) ------------------
+let sx=null, sy=null;
+window.addEventListener('touchstart', e=>{ const t=e.touches[0]; sx=t.clientX; sy=t.clientY; }, {passive:true});
+window.addEventListener('touchend', e=>{ if(sx==null) return; const t=e.changedTouches[0]; const dx=t.clientX-sx; const dy=t.clientY-sy; sx=sy=null; if (Math.abs(dx)>50 && Math.abs(dy)<80) { if (dx<0) next(); else prev(); } }, {passive:true});
+window.addEventListener('keydown', e=>{ if (e.key==='ArrowRight') next(); if (e.key==='ArrowLeft') prev(); });
+
+// Swipe on the activity button row to change selection (not just scroll)
+(function enableActsSwipe(){
+  let ax=null, ay=null;
+  $acts.addEventListener('touchstart', e=>{ const t=e.touches[0]; ax=t.clientX; ay=t.clientY; }, {passive:true});
+  $acts.addEventListener('touchend', e=>{ if(ax==null) return; const t=e.changedTouches[0]; const dx=t.clientX-ax; const dy=t.clientY-ay; ax=ay=null; if (Math.abs(dx)>50 && Math.abs(dy)<80){ if (dx<0) next(); else prev(); } }, {passive:true});
+})();
+
+function setupActsScrollControls(){
+  const el = $acts;
+  const overflow = el.scrollWidth > el.clientWidth + 4;
+  $actsPrev.style.display = overflow ? 'block' : 'none';
+  $actsNext.style.display = overflow ? 'block' : 'none';
+  if (overflow) el.parentElement.classList.add('scroll-fade'); else el.parentElement.classList.remove('scroll-fade');
+  $actsPrev.onclick = ()=> el.scrollBy({left: -Math.max(200, el.clientWidth*0.8), behavior:'smooth'});
+  $actsNext.onclick = ()=> el.scrollBy({left: Math.max(200, el.clientWidth*0.8), behavior:'smooth'});
+}
+function centerActiveBtn(){
+  const el = $acts; const btns = el.querySelectorAll('.act-btn');
+  const active = btns[activeIdx]; if (!active) return;
+  const rect = active.getBoundingClientRect(); const parent = el.getBoundingClientRect();
+  const fullyVisible = rect.left >= parent.left && rect.right <= parent.right;
+  if (!fullyVisible){ active.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'}); }
+}
+function next(){ const list=TRIP.days[activeDay].activities; if (activeIdx < list.length-1){ activeIdx++; renderActs(); renderContent(+1); } }
+function prev(){ if (activeIdx>0){ activeIdx--; renderActs(); renderContent(-1); } }
+
+// Downscale captured photo for storage
+function downscaleImage(file, maxDim=1600){
+  return new Promise((resolve, reject)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const {width, height} = img; const scale = Math.min(1, maxDim/Math.max(width,height));
+      const w=Math.round(width*scale), h=Math.round(height*scale);
+      const cvs=document.createElement('canvas'); cvs.width=w; cvs.height=h; const ctx=cvs.getContext('2d');
+      ctx.drawImage(img,0,0,w,h); cvs.toBlob(b=> b?resolve(b):reject(new Error('Blob failed')), 'image/jpeg', 0.9);
+    };
+    img.onerror = reject;
+    const reader = new FileReader(); reader.onload = ()=> img.src = reader.result; reader.onerror = reject; reader.readAsDataURL(file);
+  });
+}
+
+// Init
+(function init(){ renderDates(); renderActs(); renderContent(); })();
+// PWA: register service worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(console.warn);
+  });
+}
+</script>
+</body>
+</html>
