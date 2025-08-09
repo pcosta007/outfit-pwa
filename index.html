@@ -316,6 +316,7 @@ function renderActs(){
 }
 
 function renderAll(){
+  renderDates();
   renderActs();
   renderContent(0);
 }
@@ -468,7 +469,7 @@ function downscaleImage(file, maxDim=1600){
 }
 
 // Init
-(function init(){ renderDates(); renderActs(); renderContent(); })();
+(function init(){ renderAll(); })();
 // PWA: register service worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
