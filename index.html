@@ -26,8 +26,8 @@
 
     /* Dates row */
     .dates{ display:flex; gap:8px; }
-.dates-scroller{ overflow-x:auto; -webkit-overflow-scrolling:touch; padding:2px; }
-.dates-scroller::-webkit-scrollbar{ display:none; }
+    .dates-scroller{ overflow-x:auto; -webkit-overflow-scrolling:touch; padding:2px; }
+    .dates-scroller::-webkit-scrollbar{ display:none; }
     .date-btn{ border:1px solid var(--line); background:#fff; border-radius:999px; padding:8px 10px; text-align:center; font-size:14px; cursor:pointer; white-space:nowrap; }
     .date-btn.active{ border-color:var(--accent); box-shadow:0 0 0 2px rgba(38,72,100,.08) inset; }
 
@@ -75,9 +75,13 @@
     .thumb img{ width:100%; height:100%; object-fit:cover; }
     .del{ position:absolute; top:6px; right:6px; background:rgba(0,0,0,.6); color:#fff; border:none; border-radius:999px; width:26px; height:26px; cursor:pointer; }
 
-    .swipe-hint{ text-align:center; color:var(--muted); font-size:12px; margin-top:6px; }
     .slide{ animation:slideIn .25s ease; }
     @keyframes slideIn{ from{ opacity:.6; transform:translateX(var(--dir,0)); } to{ opacity:1; transform:translateX(0); } }
+
+    /* Fullscreen preview */
+    #fs{ position:fixed; inset:0; background:rgba(0,0,0,.9); display:none; align-items:center; justify-content:center; z-index:50; }
+    #fs img{ max-width:96vw; max-height:96vh; object-fit:contain; }
+    #heroCaption{ text-align:center; color:var(--muted); font-size:12px; margin-top:6px; display:none; }
   </style>
 </head>
 <body>
@@ -111,7 +115,7 @@
         <button id="heroNext" aria-label="Next photo" class="scroll-btn" style="right:6px; top:50%; transform:translateY(-50%);">›</button>
         <div id="heroDots" style="position:absolute; bottom:6px; left:0; right:0; display:flex; gap:6px; justify-content:center;"></div>
       </div>
-      <div id="heroCaption" class="swipe-hint"></div>
+      <div id="heroCaption"></div>
     </section>
 
     <!-- Details + notes -->
@@ -134,25 +138,28 @@
     </section>
   </div>
 
+  <!-- Fullscreen preview modal -->
+  <div id="fs"><img id="fsImg" alt="Preview" /></div>
+
 <script>
-// ------------------ Sample itinerary (swap in your JSON later) ------------------
+// ------------------ Trip data ------------------
 const TRIP = {
   days: {
     "2025-09-28": { label: "Sep 28", activities: [
       { id:"land-pmi", time:"10:00", kind:"travel", title:"Land at Palma (PMI)", sub:"Arrival", photos:["./media/palma_landing.jpg"] },
       { id:"drive-santanyi", time:"11:00", kind:"travel", title:"Drive to Santanyí", sub:"Hotel transfer", photos:[
         "./media/santanyi.webp",
-        "./media/santanyi_2.jpg",
-        "./media/santanyi_3.jpg"
+        "./media/santanyi_2.jpeg",
+        "./media/santanyi_3.jpeg"
       ] },
-      { id:"checkin-ferrereta", time:"12:00", kind:"hotel", title:"Check‑in: Can Ferrereta", sub:"Welcome!", photos:[
+      { id:"checkin-ferrereta", time:"12:00", kind:"hotel", title:"Check-in: Can Ferrereta", sub:"Welcome!", photos:[
         "./media/can_ferrereta_2.jpg",
         "./media/ferrereta_room_1.jpg",
         "./media/ferrereta_room_2.jpg",
         "./media/ferrereta_room_3.jpg"
       ] },
       { id:"pool-spa", time:"13:00", kind:"activity", title:"Pool & Spa", sub:"Relax at hotel", photos:["./media/can_ferrereta.jpg"] },
-      { id:"walk-town", time:"16:00", kind:"activity", title:"Walk Santanyí town", sub:"Stroll & photos", photos:["./media/santanyi_town.jpg"] },
+      { id:"walk-town", time:"16:00", kind:"activity", title:"Walk Santanyí town", sub:"Stroll & photos", photos:["./media/Santanyi_town.jpg"] },
       { id:"manique", time:"20:30", kind:"dinner", title:"Dinner: Manique", sub:"Brazilian & Mallorcan", photos:["./media/manique.jpg"] }
     ]},
 
@@ -230,12 +237,6 @@ const TRIP = {
   }
 };
 
-// Captions for beach-hopping slides
-const PHOTO_CAPTIONS = {
-  'beach-hopping-1': [ 'Cala Mondragó', 'Caló des Burgit', 'Cala S’amarador' ],
-  'beach-hopping-2': [ 'Caló del Moro', 'Cala Llombards' ]
-};
-
 // ------------------ IndexedDB (persist notes + outfit photos) ------------------
 const DB_NAME = 'outfit-planner-v2';
 const STORE = 'outfits';
@@ -267,6 +268,7 @@ const $heroImg = document.querySelector('#heroImg');
 const $heroPrev = document.querySelector('#heroPrev');
 const $heroNext = document.querySelector('#heroNext');
 const $heroDots = document.querySelector('#heroDots');
+const $heroCaption = document.querySelector('#heroCaption');
 const $actTitle = document.querySelector('#actTitle');
 const $actSub = document.querySelector('#actSub');
 const $actTag = document.querySelector('#actTag');
@@ -274,11 +276,18 @@ const $note = document.querySelector('#note');
 const $thumbs = document.querySelector('#thumbs');
 const $file = document.querySelector('#file');
 const $addPhotoBtn = document.querySelector('#addPhotoBtn');
-const $heroCaption = document.getElementById('heroCaption');
+const $fs = document.querySelector('#fs');
+const $fsImg = document.querySelector('#fsImg');
 
 function kindLabel(k){ return ({travel:'Travel',hotel:'Hotel',activity:'Activity',breakfast:'Breakfast',lunch:'Lunch',dinner:'Dinner'})[k]||'Activity'; }
 function kindClass(k){ return ({travel:'k-travel',hotel:'k-hotel',activity:'k-activity',breakfast:'k-breakfast',lunch:'k-lunch',dinner:'k-dinner'})[k]||'k-activity'; }
 function keyFor(dayId, actId){ return `${dayId}|${actId}`; }
+
+// Beach captions map
+const BEACH_CAPTIONS = {
+  'beach-hopping-1': ["Cala Mondragó","Caló des Burgit","Cala S’amarador"],
+  'beach-hopping-2': ["Caló del Moro","Cala Llombards"]
+};
 
 // ------------------ Rendering ------------------
 function renderDates(){
@@ -314,15 +323,12 @@ function renderAll(){
 async function renderContent(dir=0){
   const list = TRIP.days[activeDay].activities;
   const a = list[activeIdx];
-  window.currentActId = a.id; // track current activity for captions
-  const list = TRIP.days[activeDay].activities;
-  const a = list[activeIdx];
   $actTitle.textContent = `${a.time} • ${a.title}`;
   $actSub.textContent = a.sub || '';
   $actTag.textContent = kindLabel(a.kind);
   $actTag.className = 'tag ' + kindClass(a.kind);
 
-  setupHero(a.photos||[]);
+  setupHero(a.photos||[], a);
 
   const key = keyFor(activeDay, a.id);
   const rec = await getEntry(key) || { key, note:'', photos:[] };
@@ -342,52 +348,49 @@ function renderThumbs(key, photos){
   for (const p of photos){
     const cell = document.createElement('div'); cell.className='thumb';
     const img = document.createElement('img'); img.src = URL.createObjectURL(p.blob); img.loading='lazy'; img.alt='Outfit photo';
+    // Tap to fullscreen
+    img.onclick = ()=>{ $fsImg.src = img.src; $fs.style.display = 'flex'; };
     const del = document.createElement('button'); del.className='del'; del.textContent='×';
-    del.onclick = async ()=>{ URL.revokeObjectURL(img.src); await deletePhoto(key, p.id); renderContent(); };
+    del.onclick = async (ev)=>{ ev.stopPropagation(); URL.revokeObjectURL(img.src); await deletePhoto(key, p.id); renderContent(); };
     cell.appendChild(img); cell.appendChild(del); $thumbs.appendChild(cell);
   }
 }
 
+// Fullscreen interactions
+$fs.addEventListener('click', ()=>{ $fs.style.display='none'; $fsImg.removeAttribute('src'); });
+window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') { $fs.style.display='none'; $fsImg.removeAttribute('src'); }});
+
 // ------------------ Photo hero (single-image carousel) ------------------
 let photoIdx = 0;
-function setupHero(photos){
+function setupHero(photos, activity){
   const list = Array.isArray(photos)? photos : [];
+  const captions = BEACH_CAPTIONS[activity?.id] || null;
   photoIdx = 0;
   $heroPrev.style.display = list.length>1 ? 'block' : 'none';
   $heroNext.style.display = list.length>1 ? 'block' : 'none';
   $heroDots.innerHTML = '';
   list.forEach((_,i)=>{ const d=document.createElement('div'); d.className='dot'+(i===0?' active':''); $heroDots.appendChild(d); });
+
   const paint = ()=>{
     if (!list.length){
-      $heroImg.removeAttribute('src');
-      $heroDots.innerHTML='';
-      if ($heroCaption){ $heroCaption.textContent=''; $heroCaption.style.display='none'; }
+      $heroImg.removeAttribute('src'); $heroDots.innerHTML=''; $heroCaption.style.display='none'; $heroCaption.textContent='';
       return;
     }
     $heroImg.src = list[photoIdx];
     [...$heroDots.children].forEach((dot,i)=>{ dot.classList.toggle('active', i===photoIdx); });
-    if (window.currentActId && typeof PHOTO_CAPTIONS === 'object'){
-      const caps = PHOTO_CAPTIONS[window.currentActId];
-      const text = caps && caps[photoIdx] ? caps[photoIdx] : '';
-      if ($heroCaption){ $heroCaption.textContent = text; $heroCaption.style.display = text ? 'block' : 'none'; }
+    if (captions && captions[photoIdx]){
+      $heroCaption.style.display = 'block';
+      $heroCaption.textContent = captions[photoIdx];
+    } else {
+      $heroCaption.style.display = 'none';
+      $heroCaption.textContent = '';
     }
   };
+
   paint();
   $heroPrev.onclick = ()=>{ if (!list.length) return; photoIdx=(photoIdx-1+list.length)%list.length; paint(); };
   $heroNext.onclick = ()=>{ if (!list.length) return; photoIdx=(photoIdx+1)%list.length; paint(); };
-  // Swipe on hero
-  let hx=null, hy=null;
-  $hero.addEventListener('touchstart', e=>{ const t=e.touches[0]; hx=t.clientX; hy=t.clientY; }, {passive:true});
-  $hero.addEventListener('touchend', e=>{ if(hx==null) return; const t=e.changedTouches[0]; const dx=t.clientX-hx; const dy=t.clientY-hy; hx=hy=null; if (Math.abs(dx)>40 && Math.abs(dy)<80){ if (dx<0) $heroNext.click(); else $heroPrev.click(); } }, {passive:true});
-});
-  const paint = ()=>{
-    if (!list.length){ $heroImg.removeAttribute('src'); $heroDots.innerHTML=''; return; }
-    $heroImg.src = list[photoIdx];
-    [...$heroDots.children].forEach((dot,i)=>{ dot.classList.toggle('active', i===photoIdx); });
-  };
-  paint();
-  $heroPrev.onclick = ()=>{ if (!list.length) return; photoIdx=(photoIdx-1+list.length)%list.length; paint(); };
-  $heroNext.onclick = ()=>{ if (!list.length) return; photoIdx=(photoIdx+1)%list.length; paint(); };
+
   // Swipe on hero
   let hx=null, hy=null;
   $hero.addEventListener('touchstart', e=>{ const t=e.touches[0]; hx=t.clientX; hy=t.clientY; }, {passive:true});
