@@ -29,6 +29,12 @@
   h1{ font-size:18px; margin:0; }
   .sub{ color:var(--muted); font-size:12px; }
 
+  /* brand logo */
+  .brand-logo {
+    display: block;
+    height: 28px;
+  }
+   
   /* Phone canvas — iPhone 16 Pro logical size ~402×874 CSS px */
   .wrap{ padding:10px 10px 28px; margin:0 auto; }
   .phone{ max-width:402px; }
@@ -151,7 +157,8 @@
 </head>
 <body>
   <header>
-  <h1>Outfit Planner</h1>
+  <img class="brand-logo" src="./icons/fitlist-logo.svg" alt="FitList logo" />
+  
   <div class="tabs" id="tabs">
     <button class="tab-btn active" data-view="itinerary" aria-selected="true">Itinerary</button>
     <button class="tab-btn" data-view="summary" aria-selected="false">Daily Summary</button>
