@@ -50,8 +50,6 @@
   /* Phone canvas — iPhone 16 Pro logical size ~402×874 CSS px */
   .wrap{ padding:10px 10px calc(28px + 72px + env(safe-area-inset-bottom)); margin:0 auto; }
   .phone{ max-width:402px; }
-  @supports (height: 100dvh){ .phone{ min-height:100dvh; } }
-  @supports not (height: 100dvh){ .phone{ min-height:100vh; } }
 
   /* Dates row (keep as light pill buttons) */
   .dates{ display:flex; gap:8px; }
@@ -738,88 +736,11 @@ function renderPage(){
   setActiveNavUI();
 }
 
-async function renderChecklist(){
-  if (!$packList) return;
-  $packList.innerHTML = '';
-
-  // 1) Auto items from activities marked packed
-  for (const dayId of Object.keys(TRIP.days)) {
-    const day = TRIP.days[dayId];
-    for (const a of day.activities) {
-      const rec = await getEntry(keyFor(dayId, a.id)) || { packed:false };
-      if (!rec.packed) continue;
-
-      const item = document.createElement('div');
-      item.className = 'pack-item';
-
-      const cb = document.createElement('input');
-      cb.type = 'checkbox';
-      cb.checked = true;
-
-      const label = document.createElement('div');
-      label.className = 'label';
-      const dayLabel = TRIP.days[dayId]?.label || dayId;
-      label.textContent = `${dayLabel} – ${a.title} outfit`;
-
-      const tag = document.createElement('span');
-      tag.className = 'tag';
-      tag.textContent = 'Itinerary';
-
-      item.appendChild(cb);
-      item.appendChild(label);
-      item.appendChild(tag);
-      $packList.appendChild(item);
-
-      cb.addEventListener('change', async ()=>{
-        const r = await getEntry(keyFor(dayId, a.id)) || { packed:false };
-        r.packed = cb.checked;
-        await putEntry(r);
-      });
-    }
-  }
-
-  // 2) Custom items persisted under pack|custom
-  const plist = await getPacklist();
-
-  plist.items.forEach(ci=>{
-    const item = document.createElement('div');
-    item.className = 'pack-item';
-
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.checked = !!ci.checked;
-
-    const label = document.createElement('div');
-    label.className = 'label';
-    label.textContent = ci.text;
-
-    const del = document.createElement('button');
-    del.className = 'del-btn';
-    del.textContent = 'Delete';
-
-    item.appendChild(cb);
-    item.appendChild(label);
-    item.appendChild(del);
-    $packList.appendChild(item);
-
-    cb.addEventListener('change', async ()=>{
-      const l = await getPacklist();
-      const entry = l.items.find(x=>x.id===ci.id);
-      if (entry){ entry.checked = cb.checked; await putPacklist(l); }
-    });
-
-    del.addEventListener('click', async ()=>{
-      const l = await getPacklist();
-      l.items = l.items.filter(x=>x.id!==ci.id);
-      await putPacklist(l);
-      renderChecklist();
-    });
-  });
-}
-
-  // === Allow scroll only when needed (no layout changes) ===
+// === Allow scroll only when needed (ignores reserved bottom padding) ===
 (function controlPageScroll(){
   const root = document.scrollingElement || document.documentElement;
+  const wrap = document.querySelector('.wrap');
+  const bottom = document.getElementById('bottomNav');
 
   let rafId = null;
   const schedule = () => {
@@ -827,43 +748,39 @@ async function renderChecklist(){
     rafId = requestAnimationFrame(update);
   };
 
+  function getReservedBottomPx(){
+    if (!wrap) return 0;
+    const pb = getComputedStyle(wrap).paddingBottom;
+    return Number.parseFloat(pb) || 0;
+  }
+
   function update(){
-    // If total content height fits in the viewport, disable page scroll.
-    // Otherwise, enable it.
-    const fits = root.scrollHeight <= root.clientHeight + 1;
+    // Measure document height but discount the artificial bottom padding we added
+    const reserved = getReservedBottomPx();
+    const fits = (root.scrollHeight - reserved) <= (root.clientHeight + 1);
     document.documentElement.style.overflowY = fits ? 'hidden' : '';
     document.body.style.overflowY = fits ? 'hidden' : '';
   }
 
-  // Run at startup
   window.addEventListener('load', schedule, { once: true });
-
-  // Re-evaluate on viewport changes
   window.addEventListener('resize', schedule);
   window.addEventListener('orientationchange', schedule);
 
-  // Re-evaluate when your app changes the DOM
-  // (dates/acts render, hero loads images, checklist updates, etc.)
   const mo = new MutationObserver(schedule);
   mo.observe(document.body, { childList: true, subtree: true, attributes: true });
 
-  // Also catch late-loading images
   Array.from(document.images).forEach(img=>{
     if (!img.complete) img.addEventListener('load', schedule, { once:true });
   });
 
-  // If you have known points where content changes, call schedule() after them:
-  const _renderContent = renderContent;
-  window.renderContent = async (...args) => { await _renderContent.apply(this, args); schedule(); };
-
-  const _renderSummary = renderSummary;
-  window.renderSummary = async (...args) => { await _renderSummary.apply(this, args); schedule(); };
-
-  const _renderChecklist = renderChecklist;
-  window.renderChecklist = async (...args) => { await _renderChecklist.apply(this, args); schedule(); };
-
-  const _renderPage = renderPage;
-  window.renderPage = (...args) => { const r = _renderPage.apply(this, args); schedule(); return r; };
+  // Hook your render functions so we re-evaluate after content changes
+  const hook = (name)=>{
+    const fn = window[name];
+    if (typeof fn === 'function') {
+      window[name] = async (...args)=>{ const r = await fn(...args); schedule(); return r; };
+    }
+  };
+  ['renderContent','renderSummary','renderChecklist','renderPage'].forEach(hook);
 })();
   
   function openLightbox(dataUrl){
