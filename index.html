@@ -914,12 +914,31 @@ $addItemInput?.addEventListener('keydown', e=>{
 
 
 function setupActsScrollControls(){
+  // Keep these from throwing if the arrow buttons don't exist or are hidden
+  if ($actsPrev) $actsPrev.style.display = 'none';
+  if ($actsNext) $actsNext.style.display = 'none';
+  // Ensure no fade overlays are applied
+  if ($acts && $acts.parentElement) $acts.parentElement.classList.remove('scroll-fade');
   }
 function centerActiveBtn(){
 }
-function next(){}
-function prev(){}
+function next(){
+  // Keep activity navigation working (no day swipe here)
+  const list = TRIP.days[activeDay].activities;
+  if (activeIdx < list.length - 1){
+    activeIdx++;
+    renderActs();
+    renderContent(+1);
+  }
+}
 
+function prev(){
+  if (activeIdx > 0){
+    activeIdx--;
+    renderActs();
+    renderContent(-1);
+  }
+}
 // Downscale captured photo for storage
 function downscaleImage(file, maxDim=1600){
   return new Promise((resolve, reject)=>{
