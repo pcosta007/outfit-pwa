@@ -34,6 +34,17 @@
     display: block;
     height: 28px;
   }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .brand-text {
+    font-size: 20px;
+    font-weight: 700;
+    color: #264864;
+  }
    
   /* Phone canvas — iPhone 16 Pro logical size ~402×874 CSS px */
   .wrap{ padding:10px 10px 28px; margin:0 auto; }
@@ -156,13 +167,36 @@
 </style>
 </head>
 <body>
-  <header>
-  <img class="brand-logo" src="./icons/fitlist-logo.svg" alt="FitList logo" />
-  
-  <div class="tabs" id="tabs">
-    <button class="tab-btn active" data-view="itinerary" aria-selected="true">Itinerary</button>
-    <button class="tab-btn" data-view="summary" aria-selected="false">Daily Summary</button>
-    <button class="tab-btn" data-view="checklist" aria-selected="false">Checklist</button>
+<header>
+  <div class="brand">
+    <!-- Inline SVG Logo -->
+    <svg width="32" height="32" viewBox="0 0 256 256" fill="none"
+         xmlns="http://www.w3.org/2000/svg" role="img" aria-label="FitList suitcase check icon">
+      <defs>
+        <style>
+          .stroke { stroke: #264864; }
+        </style>
+      </defs>
+      <!-- Suitcase outline -->
+      <rect x="36" y="68" width="184" height="140" rx="20" class="stroke"
+            stroke-width="12" fill="none" stroke-linejoin="round"/>
+      <!-- Handle -->
+      <path d="M92 68V52c0-11 9-20 20-20h32c11 0 20 9 20 20v16"
+            class="stroke" stroke-width="12" fill="none"
+            stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Vertical divisions -->
+      <line x1="76" y1="68" x2="76" y2="208" class="stroke"
+            stroke-width="8" stroke-linecap="round" opacity="0.25"/>
+      <line x1="180" y1="68" x2="180" y2="208" class="stroke"
+            stroke-width="8" stroke-linecap="round" opacity="0.25"/>
+      <!-- Checkmark -->
+      <path d="M88 138l28 28 52-56"
+            class="stroke" stroke-width="12" fill="none"
+            stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+
+    <!-- Brand text -->
+    <span class="brand-text">FitList</span>
   </div>
 </header>
 
