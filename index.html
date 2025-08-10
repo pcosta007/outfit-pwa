@@ -14,14 +14,27 @@
  <style>
   :root{ --bg:#fafafa; --card:#fff; --ink:#0f172a; --muted:#64748b; --accent:#264864; --line:#e2e8f0; }
   *{ box-sizing: border-box; }
+
+  html, body {
+    height:100%;
+    overflow: hidden;
+  }
+   
   body{ margin:0; background:var(--bg); color:var(--ink); font:16px system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
-  header{
-    position:sticky;
-    top:0;
+  
+  :root{
+    --header-h: 56px;
+    --nav-h: 38px;
+   
+   header{
+    position:fixed;
+    top:0; left:0; right:0;
     z-index:5;
     background:var(--card);
     border-bottom:1px solid var(--line);
     padding:10px 12px;
+    padding-top: calc(10px + env(safe-area-inset-top));
+    height: calc(var(--header-h) + env(safe-area-inset-top));
   }
   /* Add extra top padding equal to dynamic island */
   @supports (padding-top: env(safe-area-inset-top)) {
@@ -48,10 +61,17 @@
   }
    
   /* Phone canvas — iPhone 16 Pro logical size ~402×874 CSS px */
-  .wrap{ padding:10px 10px calc(28px + 72px + env(safe-area-inset-bottom)); margin:0 auto; }
-  .phone{ max-width:402px; }
-  @supports (height: 100dvh){ .phone{ min-height:100dvh; } }
-  @supports not (height: 100dvh){ .phone{ min-height:100vh; } }
+ /* Middle content fills between header and bottom nav, scrolls only if needed */
+.wrap{
+  position: fixed;                         /* ⬅️ pin the content region */
+  top: calc(var(--header-h) + env(safe-area-inset-top));
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
+  left: 0; right: 0;
+  overflow-y: auto;                         /* ⬅️ scrolling happens here */
+  -webkit-overflow-scrolling: touch;
+  padding: 10px;                            /* simpler: uniform padding */
+}
+.phone{ max-width:402px; margin:0 auto; }   /* keep centering */
 
   /* Dates row (keep as light pill buttons) */
   .dates{ display:flex; gap:8px; }
@@ -162,6 +182,7 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 0;
   padding: 2px 10px calc(2px + env(safe-area-inset-bottom));
+  height: calc(var(--nav-h) + env(safe-area-inset-bottom));  /* ⬅️ explicit height */
   z-index: 10;
 }
 
