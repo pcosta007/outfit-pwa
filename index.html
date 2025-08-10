@@ -91,6 +91,10 @@
   .scroll-fade::before{ left:0; background:linear-gradient(90deg,var(--bg),transparent); }
   .scroll-fade::after{ right:0; background:linear-gradient(270deg,var(--bg),transparent); }
 
+   #actsPrev, #actsNext {
+     display: none !important;
+   }
+   
   /* Card + hero */
   .section{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px; margin:12px 0; box-shadow:0 1px 0 rgba(15,23,42,.03); }
   .hero{ position:relative; width:100%; aspect-ratio:16/10; background:#f1f5f9; overflow:hidden; border-radius:12px; }
@@ -156,7 +160,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0;
-  padding: 6px 10px calc(6px + env(safe-area-inset-bottom));
+  padding: 2px 10px calc(2px + env(safe-area-inset-bottom));
   z-index: 10;
 }
 
@@ -336,8 +340,8 @@
      viewBox="0 0 24 24" fill="none" stroke="currentColor"
      stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
      aria-hidden="true">
-  <rect x="3" y="3" width="20" height="20" rx="4" ry="4"/>
-  <path d="M8 12l3 3 5-5"/>
+  <rect x="2.75" y="2.75" width="20" height="20" rx="4" ry="4"/>
+  <path d="M8.25 13.75 L11 11 L15 7"/>
 </svg>
     </span>
     <span class="label">Checklist</span>
