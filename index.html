@@ -156,12 +156,10 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0;
-  padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+  padding: 6px 10px calc(6px + env(safe-area-inset-bottom));
   z-index: 10;
 }
 
-/* Make room so content isn't hidden behind the fixed nav */
-.wrap { padding-bottom: 88px; } /* adjust if your nav is taller */
 
 /* Buttons inside the bottom nav */
 .nav-btn{
@@ -189,7 +187,7 @@
 
 /* Improved tap targets */
 @media (pointer: coarse){
-  .nav-btn { padding: 10px 6px; }
+  .nav-btn { padding: 6px 6px; }
 }
    
  </style>
@@ -292,8 +290,10 @@
     <div id="packList" class="pack-list"></div>
   </div>
 </section>
+    
+</div>
 
-    <!-- Bottom navigation -->
+      <!-- Bottom navigation -->
 <nav id="bottomNav" class="bottom-nav" role="tablist" aria-label="Primary">
   <!-- Itinerary -->
   <button class="nav-btn" data-view="itinerary" role="tab" aria-selected="true">
@@ -331,22 +331,23 @@
   <!-- Checklist -->
   <button class="nav-btn" data-view="checklist" role="tab" aria-selected="false">
     <span class="icon" aria-hidden="true">
-      <!-- Checklist icon (rounded rect + 3 checks) -->
-      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22"
-           viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-           aria-hidden="true">
-        <rect x="2" y="2" width="20" height="20" rx="4" ry="4"/>
-        <path d="M4 7.5l1.6 1.6 3.2-3.2"/><path d="M10 7.5h9"/>
-        <path d="M4 12.5l1.6 1.6 3.2-3.2"/><path d="M10 12.5h9"/>
-        <path d="M4 17.5l1.6 1.6 3.2-3.2"/><path d="M10 17.5h9"/>
-      </svg>
+      <!-- Checklist icon (rounded rect + 2 checks) -->
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+     viewBox="0 0 24 24" fill="none" stroke="currentColor"
+     stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+     aria-hidden="true">
+  <rect x="2" y="2" width="20" height="20" rx="4" ry="4"/>
+  <!-- row 1 -->
+  <path d="M4 7.5l1.6 1.6 3.2-3.2"/>
+  <path d="M10 7.5h9"/>
+  <!-- row 2 -->
+  <path d="M4 12.5l1.6 1.6 3.2-3.2"/>
+  <path d="M10 12.5h9"/>
+</svg>
     </span>
     <span class="label">Checklist</span>
   </button>
 </nav>
-    
-</div>
 
   <!-- Fullscreen preview modal -->
   <div id="fs"><img id="fsImg" alt="Preview" /></div>
