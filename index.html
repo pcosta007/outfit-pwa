@@ -14,7 +14,18 @@
  <style>
   :root{ --bg:#fafafa; --card:#fff; --ink:#0f172a; --muted:#64748b; --accent:#264864; --line:#e2e8f0; }
   *{ box-sizing: border-box; }
-  body{ margin:0; background:var(--bg); color:var(--ink); font:16px system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+  body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font:16px system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+
+  /* New: make a full-height 3-row layout */
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 100svh;   /* adapts across iPhones; prevents extra gray below */
+  overflow: hidden;      /* body never scrolls; only the middle section can */
+}
   header{
     position:sticky;
     top:0;
@@ -47,23 +58,17 @@
     color: #264864;
   }
    
-html, body { height: 100%; } /* ensure viewport math works */
+/* remove the html,body height rule entirely */
 
-/* Middle content pane: fixed between header and bottom bar */
 .wrap{
-  position: fixed;
-  left: 0; right: 0;
-  /* measured heights from JS below */
-  top: calc(var(--header-h, 0px) + env(safe-area-inset-top));
-  bottom: calc(var(--bottom-h, 0px) + env(safe-area-inset-bottom));
-  overflow: auto;                     /* scroll only if needed */
+  /* not fixed */
+  padding: 10px;
+  margin: 0 auto;
+  overflow: auto;                 /* only this scrolls when needed */
   -webkit-overflow-scrolling: touch;
-  padding: 10px;                      /* keep your inner spacing */
-  margin: 0;                          /* avoid adding extra height */
 }
 
-/* keep your inner max-width constraint */
-.phone{ max-width:402px; margin:0 auto; }
+.phone{ max-width:402px; width:100%; margin:0 auto; }
 
   /* Dates row (keep as light pill buttons) */
   .dates{ display:flex; gap:8px; }
@@ -166,15 +171,13 @@ html, body { height: 100%; } /* ensure viewport math works */
 
 /* Bottom nav */
 .bottom-nav{
-  position: fixed;
-  left: 0; right: 0; bottom: 0;
+  /* no positioning needed; body grid keeps it at the bottom */
   background: var(--card);
   border-top: 1px solid var(--line);
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0;
   padding: 2px 10px calc(2px + env(safe-area-inset-bottom));
-  z-index: 10;
 }
 
 
@@ -712,11 +715,6 @@ function setChromeHeights(){
   if (header) document.documentElement.style.setProperty('--header-h', header.offsetHeight + 'px');
   if (bottom) document.documentElement.style.setProperty('--bottom-h', bottom.offsetHeight + 'px');
 }
-
-window.addEventListener('load', setChromeHeights);
-window.addEventListener('resize', setChromeHeights);
-window.addEventListener('orientationchange', setChromeHeights);
-// If you ever dynamically change header/nav size, call setChromeHeights() again.
   
 function renderPage(){
   const datesSec     = document.getElementById('datesSection');
