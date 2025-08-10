@@ -14,7 +14,20 @@
     :root{ --bg:#fafafa; --card:#fff; --ink:#0f172a; --muted:#64748b; --accent:#264864; --line:#e2e8f0; }
     *{ box-sizing: border-box; }
     body{ margin:0; background:var(--bg); color:var(--ink); font:16px system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
-    header{ position:sticky; top:0; z-index:5; background:var(--card); border-bottom:1px solid var(--line); padding:10px 12px; }
+    header{
+      position:sticky; 
+      top:0; 
+      z-index:5; 
+      background:var(--card); 
+      border-bottom:1px solid var(--line); 
+      padding:10px 12px;
+    }
+    /* Add extra top padding equal to dynamic island */
+    @supports (padding-top: env(safe-area-inset-top)) {
+      header{
+        padding-top: calc(10px + env(safe-area-inset-top));
+      }
+    }
     h1{ font-size:18px; margin:0; }
     .sub{ color:var(--muted); font-size:12px; }
 
@@ -78,10 +91,61 @@
     .slide{ animation:slideIn .25s ease; }
     @keyframes slideIn{ from{ opacity:.6; transform:translateX(var(--dir,0)); } to{ opacity:1; transform:translateX(0); } }
 
+    /* Daily Summary */
+    .summary { display: grid; gap: 10px; }
+    .summary-card {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid var(--line);
+      background: var(--card);
+      border-radius: 12px;
+      padding: 10px;
+  }
+    .summary-info { display: grid; gap: 2px; }
+    .summary-title { font-weight: 600; font-size: 14px; }
+    .summary-time  { font-size: 12px; color: var(--muted); }
+
+    .summary-thumbs { display: grid; grid-auto-flow: column; gap: 8px; }
+    .summary-thumb {
+      width: 64px; height: 64px; border-radius: 10px; overflow: hidden;
+      background:#f1f5f9;
+      display:flex; align-items:center; justify-content:center;
+  }
+    .summary-thumb img { width:100%; height:100%; object-fit: cover; display:block; }
+    .summary-thumb.empty { font-size: 11px; color: var(--muted); }
+    
     /* Fullscreen preview */
     #fs{ position:fixed; inset:0; background:rgba(0,0,0,.9); display:none; align-items:center; justify-content:center; z-index:50; }
     #fs img{ max-width:96vw; max-height:96vh; object-fit:contain; }
     #heroCaption{ text-align:center; color:var(--muted); font-size:12px; margin-top:6px; display:none; }
+
+    /* top nav tabs */
+    .tabs { display:flex; gap:8px; }
+    .tab-btn {
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:999px;
+      padding:8px 12px;
+      font-size:14px;
+      cursor:pointer;
+    }
+    .tab-btn.active {
+      border-color:var(--accent);
+      box-shadow:0 0 0 2px rgba(38,72,100,.08) inset;
+    }
+    .hidden { display:none !important; }
+    /* Checklist */
+    .pack-list { display:grid; gap:8px; }
+    .pack-item {
+      display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center;
+      border:1px solid var(--line); background:var(--card); border-radius:12px; padding:10px;
+    }
+    .pack-item .label { font-size:14px; }
+    .pack-item .tag { font-size:12px; background:#e2e8f0; color:#0f172a; padding:2px 8px; border-radius:999px; }
+    .pack-item .del-btn { border:1px solid var(--line); background:#fff; border-radius:8px; padding:6px 8px; cursor:pointer; }
+  
   </style>
 </head>
 <body>
@@ -91,15 +155,24 @@
   </header>
 
   <div class="wrap phone">
-    <!-- Dates -->
-    <div class="section" style="padding:8px; background:transparent; border:none; box-shadow:none; margin:0 0 8px;">
-      <div class="dates-scroller">
-        <div id="dates" class="dates"></div>
-      </div>
+    <!-- Top tabs -->
+  <div class="section" style="padding:8px; background:transparent; border:none; box-shadow:none; margin:0 0 8px;">
+    <div class="tabs" id="tabs">
+      <button class="tab-btn active" data-view="itinerary" aria-selected="true">Itinerary</button>
+      <button class="tab-btn" data-view="summary" aria-selected="false">Daily Summary</button>
+      <button class="tab-btn" data-view="checklist" aria-selected="false">Checklist</button>
     </div>
+  </div>
+
+  <!-- Dates -->
+  <div id="datesSection" class="section" style="padding:8px; background:transparent; border:none; box-shadow:none; margin:0 0 8px;">
+    <div class="dates-scroller">
+      <div id="dates" class="dates"></div>
+    </div>
+  </div>
 
     <!-- Activity buttons (swipeable) -->
-    <div class="section" style="padding:0; background:transparent; border:none; box-shadow:none; margin:0 0 8px;">
+    <div id="actsSection" class="section" style="padding:0; background:transparent; border:none; box-shadow:none; margin:0 0 8px;">
       <div class="acts-wrap scroll-fade">
         <button id="actsPrev" class="scroll-btn" aria-label="Prev">‹</button>
         <div id="acts" class="acts"></div>
@@ -108,7 +181,7 @@
     </div>
 
     <!-- Single-photo hero (no heading) -->
-    <section class="section" style="padding:10px;">
+    <section id="heroSection" class="section" style="padding:10px;">
       <div id="hero" class="hero">
         <img id="heroImg" alt="Activity photo" />
         <button id="heroPrev" aria-label="Previous photo" class="scroll-btn" style="left:6px; top:50%; transform:translateY(-50%);">‹</button>
@@ -119,7 +192,7 @@
     </section>
 
     <!-- Details + notes -->
-    <section class="section">
+    <section id="detailsSection" class="section">
       <div class="row">
         <div>
           <div id="actTitle" class="title" style="font-size:16px; font-weight:600;"></div>
@@ -141,7 +214,23 @@
         <div id="thumbs" class="thumbs"></div>
       </div>
     </section>
+  <!-- Daily Summary page -->
+<section id="summarySection" class="section hidden">
+  <div id="summaryList" class="summary"></div>
+</section>
+    
+   <!-- Checklist page -->
+<section id="checklistSection" class="section hidden">
+  <div style="display:grid; gap:8px;">
+    <label class="sub" for="addItemInput">Add a packing item</label>
+    <div style="display:flex; gap:8px;">
+      <input id="addItemInput" type="text" placeholder="e.g., Sunscreen, Hat" style="flex:1; padding:10px; border:1px solid var(--line); border-radius:10px;"/>
+      <button id="addItemBtn" class="btn" type="button">Add</button>
+    </div>
+    <div id="packList" class="pack-list"></div>
   </div>
+</section>
+</div>
 
   <!-- Fullscreen preview modal -->
   <div id="fs"><img id="fsImg" alt="Preview" /></div>
@@ -258,11 +347,22 @@ async function putEntry(entry){ db = db || await openDB(); return new Promise((r
 async function getEntry(key){ db = db || await openDB(); return new Promise((res,rej)=>{ const tx=db.transaction(STORE,'readonly'); const rq=tx.objectStore(STORE).get(key); rq.onsuccess=()=>res(rq.result||null); rq.onerror=()=>rej(rq.error); }); }
 async function deletePhoto(key, id){ const rec = await getEntry(key) || { key, note:'', photos:[] }; rec.photos=(rec.photos||[]).filter(p=>p.id!==id); await putEntry(rec); }
 
+  // === Custom packing list (stored under a special key) ===
+const CUSTOM_PACK_KEY = 'pack|custom';
+
+async function getPacklist(){
+  return (await getEntry(CUSTOM_PACK_KEY)) || { key: CUSTOM_PACK_KEY, items: [] };
+}
+async function putPacklist(list){
+  await putEntry(list);
+}
+  
 // ------------------ State ------------------
 const dayIds = Object.keys(TRIP.days);
 let activeDay = dayIds[0];
 let activeIdx = 0;
-
+let currentView = 'itinerary'; // 'itinerary' | 'summary' | 'checklist'
+  
 // DOM
 const $dates = document.querySelector('#dates');
 const $acts = document.querySelector('#acts');
@@ -283,6 +383,10 @@ const $file = document.querySelector('#file');
 const $addPhotoBtn = document.querySelector('#addPhotoBtn');
 const $fs = document.querySelector('#fs');
 const $fsImg = document.querySelector('#fsImg');
+const $packedCheckbox = document.querySelector('#packedCheckbox'); // NEW
+const $packList = document.querySelector('#packList');             // NEW
+const $addItemInput = document.querySelector('#addItemInput');     // NEW
+const $addItemBtn = document.querySelector('#addItemBtn');         // NEW
 
 function kindLabel(k){ return ({travel:'Travel',hotel:'Hotel',activity:'Activity',breakfast:'Breakfast',lunch:'Lunch',dinner:'Dinner'})[k]||'Activity'; }
 function kindClass(k){ return ({travel:'k-travel',hotel:'k-hotel',activity:'k-activity',breakfast:'k-breakfast',lunch:'k-lunch',dinner:'k-dinner'})[k]||'k-activity'; }
@@ -301,7 +405,18 @@ function renderDates(){
     const btn = document.createElement('button');
     btn.className = 'date-btn' + (id===activeDay?' active':'');
     btn.textContent = TRIP.days[id].label || id;
-    btn.onclick = ()=>{ activeDay=id; activeIdx=0; renderAll(); };
+    btn.onclick = ()=> {
+  activeDay = id;
+  activeIdx = 0;
+  if (currentView === 'summary') {
+    renderDates();      // update active highlight
+    renderSummary();    // refresh summary list
+  } else if (currentView === 'itinerary') {
+    renderAll();
+  } else {
+    renderPage();       // future-proof
+  }
+};
     $dates.appendChild(btn);
   });
 }
@@ -338,12 +453,75 @@ async function renderContent(dir=0){
 
   const key = keyFor(activeDay, a.id);
   const rec = await getEntry(key) || { key, note:'', photos:[] };
+  if ($packedCheckbox) $packedCheckbox.checked = !!rec.packed;
   $note.value = rec.note || '';
   renderThumbs(key, rec.photos||[]);
 
   const main = document.querySelector('.wrap');
   main.style.setProperty('--dir', dir<0?'-6%':dir>0?'6%':'0');
   main.classList.remove('slide'); void main.offsetWidth; main.classList.add('slide');
+}
+  async function renderSummary(){
+  const $list = document.getElementById('summaryList');
+  if (!$list) return;
+  $list.innerHTML = '';
+
+  const day = TRIP.days[activeDay];
+  if (!day) return;
+
+  for (const a of day.activities) {
+    // itinerary photo (first)
+    const itinSrc = (a.photos && a.photos[0]) ? a.photos[0] : null;
+
+    // outfit photo (first, from IndexedDB if any)
+    const key = keyFor(activeDay, a.id);
+    const rec = await getEntry(key) || { photos: [] };
+    const outfitSrc = rec.photos && rec.photos[0] ? rec.photos[0].dataUrl : null;
+
+    const card = document.createElement('div');
+    card.className = 'summary-card';
+
+    const left = document.createElement('div');
+    left.className = 'summary-info';
+    left.innerHTML = `
+      <div class="summary-title">${a.title}</div>
+      <div class="summary-time">${a.time}</div>
+    `;
+
+    const right = document.createElement('div');
+    right.className = 'summary-thumbs';
+
+    const itin = document.createElement('div');
+    itin.className = 'summary-thumb';
+    if (itinSrc) {
+      const img = document.createElement('img');
+      img.src = itinSrc;
+      img.alt = 'Activity';
+      itin.appendChild(img);
+    } else {
+      itin.classList.add('empty');
+      itin.textContent = 'No photo';
+    }
+
+    const outfit = document.createElement('div');
+    outfit.className = 'summary-thumb';
+    if (outfitSrc) {
+      const img = document.createElement('img');
+      img.src = outfitSrc;
+      img.alt = 'Outfit';
+      outfit.appendChild(img);
+    } else {
+      outfit.classList.add('empty');
+      outfit.textContent = 'No outfit';
+    }
+
+    right.appendChild(itin);
+    right.appendChild(outfit);
+
+    card.appendChild(left);
+    card.appendChild(right);
+    $list.appendChild(card);
+  }
 }
 
 function renderThumbs(key, photos){
@@ -376,6 +554,129 @@ function renderThumbs(key, photos){
   }
 }
 
+  function setActiveTabUI(){
+  const tabs = document.querySelectorAll('#tabs .tab-btn');
+  tabs.forEach(btn=>{
+    const isActive = btn.dataset.view === currentView;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+  });
+}
+
+function renderPage(){
+  // Sections for Itinerary
+  const itSecs = [
+    document.getElementById('datesSection'),
+    document.getElementById('actsSection'),
+    document.getElementById('heroSection'),
+    document.getElementById('detailsSection'),
+  ];
+  const summarySec = document.getElementById('summarySection');
+  const checklistSec = document.getElementById('checklistSection');
+
+  // Hide everything first
+  [...itSecs, summarySec, checklistSec].forEach(el => el && el.classList.add('hidden'));
+
+  if (currentView === 'itinerary') {
+    itSecs.forEach(el => el && el.classList.remove('hidden'));
+  } else if (currentView === 'summary') {
+    summarySec && summarySec.classList.remove('hidden');
+    renderDates();     // keep the same date bar behavior as itinerary
+    renderSummary();   // draw the list for the active day
+ } else if (currentView === 'checklist') {
+  checklistSec && checklistSec.classList.remove('hidden');
+  renderChecklist();
+}
+
+  setActiveTabUI();
+
+  // Re-render itinerary sub-UI when switching back
+  if (currentView === 'itinerary') {
+    renderDates();
+    renderActs();
+    renderContent();
+  }
+}
+
+async function renderChecklist(){
+  if (!$packList) return;
+  $packList.innerHTML = '';
+
+  // 1) Auto items from activities marked packed
+  for (const dayId of Object.keys(TRIP.days)) {
+    const day = TRIP.days[dayId];
+    for (const a of day.activities) {
+      const rec = await getEntry(keyFor(dayId, a.id)) || { packed:false };
+      if (!rec.packed) continue;
+
+      const item = document.createElement('div');
+      item.className = 'pack-item';
+
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = true;
+
+      const label = document.createElement('div');
+      label.className = 'label';
+      const dayLabel = TRIP.days[dayId]?.label || dayId;
+      label.textContent = `${dayLabel} – ${a.title} outfit`;
+
+      const tag = document.createElement('span');
+      tag.className = 'tag';
+      tag.textContent = 'Itinerary';
+
+      item.appendChild(cb);
+      item.appendChild(label);
+      item.appendChild(tag);
+      $packList.appendChild(item);
+
+      cb.addEventListener('change', async ()=>{
+        const r = await getEntry(keyFor(dayId, a.id)) || { packed:false };
+        r.packed = cb.checked;
+        await putEntry(r);
+      });
+    }
+  }
+
+  // 2) Custom items persisted under pack|custom
+  const plist = await getPacklist();
+
+  plist.items.forEach(ci=>{
+    const item = document.createElement('div');
+    item.className = 'pack-item';
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = !!ci.checked;
+
+    const label = document.createElement('div');
+    label.className = 'label';
+    label.textContent = ci.text;
+
+    const del = document.createElement('button');
+    del.className = 'del-btn';
+    del.textContent = 'Delete';
+
+    item.appendChild(cb);
+    item.appendChild(label);
+    item.appendChild(del);
+    $packList.appendChild(item);
+
+    cb.addEventListener('change', async ()=>{
+      const l = await getPacklist();
+      const entry = l.items.find(x=>x.id===ci.id);
+      if (entry){ entry.checked = cb.checked; await putPacklist(l); }
+    });
+
+    del.addEventListener('click', async ()=>{
+      const l = await getPacklist();
+      l.items = l.items.filter(x=>x.id!==ci.id);
+      await putPacklist(l);
+      renderChecklist();
+    });
+  });
+}
+  
   function openLightbox(dataUrl){
   const overlay = document.createElement('div');
   overlay.style.cssText = `
@@ -478,6 +779,31 @@ $file.addEventListener('change', async ()=>{
   renderContent();
   $file.value = '';
 });
+
+// Packed toggle saves to the same record and refreshes the checklist page
+$packedCheckbox?.addEventListener('change', async ()=>{
+  const a = TRIP.days[activeDay].activities[activeIdx];
+  const key = keyFor(activeDay, a.id);
+  const rec = await getEntry(key) || { key, note:'', photos:[], packed:false };
+  rec.packed = $packedCheckbox.checked;
+  await putEntry(rec);
+  if (currentView === 'checklist') renderChecklist();
+});
+
+  // Add custom packing item
+$addItemBtn?.addEventListener('click', async ()=>{
+  const text = ($addItemInput?.value || '').trim();
+  if (!text) return;
+  const list = await getPacklist();
+  list.items.unshift({ id: crypto.randomUUID(), text, checked:false });
+  await putPacklist(list);
+  $addItemInput.value = '';
+  renderChecklist();
+});
+$addItemInput?.addEventListener('keydown', e=>{
+  if (e.key === 'Enter') { e.preventDefault(); $addItemBtn?.click(); }
+});
+  
 // ------------------ Swipe navigation (activities) ------------------
 let sx=null, sy=null;
 window.addEventListener('touchstart', e=>{ const t=e.touches[0]; sx=t.clientX; sy=t.clientY; }, {passive:true});
@@ -533,8 +859,24 @@ function downscaleImage(file, maxDim=1600){
   });
 } 
 
+(function initTabs(){
+  const tabs = document.getElementById('tabs');
+  if (!tabs) return;
+  tabs.addEventListener('click', (e)=>{
+    const btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    const next = btn.dataset.view;
+    if (next && next !== currentView){
+      currentView = next;
+      renderPage();
+    }
+  });
+})();  
+  
 // Init
-(function init(){ renderAll(); })();
+(function init(){
+  renderPage(); // Load the default page based on currentView
+})();
 // PWA: register service worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
