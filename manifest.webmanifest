@@ -1,6 +1,6 @@
 {
-    "name": "Outfit Planner",
-    "short_name": "Outfits",
+    "name": "FitList",
+    "short_name": "FitList",
     "start_url": "./?source=pwa",
     "scope": "./",
     "display": "standalone",
@@ -8,6 +8,7 @@
     "theme_color": "#264864",
     "icons": [
       { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-      { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+      { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+      { "src": "icons/icon-1024.png", "sizes": "1024x1024", "type": "image/png" }
     ]
   }
