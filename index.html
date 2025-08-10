@@ -194,6 +194,19 @@
 @media (pointer: coarse){
   .nav-btn { padding: 6px 6px; }
 }
+
+/* Stop iOS focus-zoom by keeping controls >=16px */
+input, textarea, select { 
+  font-size: 16px; 
+  line-height: 1.4;
+}
+
+/* Your specific fields */
+.note { font-size: 16px; }           /* the big textarea */
+#addItemInput { font-size: 16px; }   /* the “Add a packing item” input */
+
+/* Optional: discourage Safari from “helpfully” resizing text */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
    
  </style>
 </head>
