@@ -332,17 +332,12 @@
   <button class="nav-btn" data-view="checklist" role="tab" aria-selected="false">
     <span class="icon" aria-hidden="true">
       <!-- Checklist icon (rounded rect + 2 checks) -->
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22"
      viewBox="0 0 24 24" fill="none" stroke="currentColor"
      stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
      aria-hidden="true">
-  <rect x="2" y="2" width="20" height="20" rx="4" ry="4"/>
-  <!-- row 1 -->
-  <path d="M4 7.5l1.6 1.6 3.2-3.2"/>
-  <path d="M10 7.5h9"/>
-  <!-- row 2 -->
-  <path d="M4 12.5l1.6 1.6 3.2-3.2"/>
-  <path d="M10 12.5h9"/>
+  <rect x="3" y="3" width="20" height="20" rx="4" ry="4"/>
+  <path d="M8 12l3 3 5-5"/>
 </svg>
     </span>
     <span class="label">Checklist</span>
@@ -925,17 +920,6 @@ $addItemInput?.addEventListener('keydown', e=>{
 });
   
 // ------------------ Swipe navigation (activities) ------------------
-let sx=null, sy=null;
-window.addEventListener('touchstart', e=>{ const t=e.touches[0]; sx=t.clientX; sy=t.clientY; }, {passive:true});
-window.addEventListener('touchend', e=>{ if(sx==null) return; const t=e.changedTouches[0]; const dx=t.clientX-sx; const dy=t.clientY-sy; sx=sy=null; if (Math.abs(dx)>50 && Math.abs(dy)<80) { if (dx<0) next(); else prev(); } }, {passive:true});
-window.addEventListener('keydown', e=>{ if (e.key==='ArrowRight') next(); if (e.key==='ArrowLeft') prev(); });
-
-// Swipe on the activity button row to change selection (not just scroll)
-(function enableActsSwipe(){
-  let ax=null, ay=null;
-  $acts.addEventListener('touchstart', e=>{ const t=e.touches[0]; ax=t.clientX; ay=t.clientY; }, {passive:true});
-  $acts.addEventListener('touchend', e=>{ if(ax==null) return; const t=e.changedTouches[0]; const dx=t.clientX-ax; const dy=t.clientY-ay; ax=ay=null; if (Math.abs(dx)>50 && Math.abs(dy)<80){ if (dx<0) next(); else prev(); } }, {passive:true});
-})();
 
 function setupActsScrollControls(){
   const el = $acts;
