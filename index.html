@@ -816,6 +816,55 @@ async function renderChecklist(){
     });
   });
 }
+
+  // === Allow scroll only when needed (no layout changes) ===
+(function controlPageScroll(){
+  const root = document.scrollingElement || document.documentElement;
+
+  let rafId = null;
+  const schedule = () => {
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(update);
+  };
+
+  function update(){
+    // If total content height fits in the viewport, disable page scroll.
+    // Otherwise, enable it.
+    const fits = root.scrollHeight <= root.clientHeight + 1;
+    document.documentElement.style.overflowY = fits ? 'hidden' : '';
+    document.body.style.overflowY = fits ? 'hidden' : '';
+  }
+
+  // Run at startup
+  window.addEventListener('load', schedule, { once: true });
+
+  // Re-evaluate on viewport changes
+  window.addEventListener('resize', schedule);
+  window.addEventListener('orientationchange', schedule);
+
+  // Re-evaluate when your app changes the DOM
+  // (dates/acts render, hero loads images, checklist updates, etc.)
+  const mo = new MutationObserver(schedule);
+  mo.observe(document.body, { childList: true, subtree: true, attributes: true });
+
+  // Also catch late-loading images
+  Array.from(document.images).forEach(img=>{
+    if (!img.complete) img.addEventListener('load', schedule, { once:true });
+  });
+
+  // If you have known points where content changes, call schedule() after them:
+  const _renderContent = renderContent;
+  window.renderContent = async (...args) => { await _renderContent.apply(this, args); schedule(); };
+
+  const _renderSummary = renderSummary;
+  window.renderSummary = async (...args) => { await _renderSummary.apply(this, args); schedule(); };
+
+  const _renderChecklist = renderChecklist;
+  window.renderChecklist = async (...args) => { await _renderChecklist.apply(this, args); schedule(); };
+
+  const _renderPage = renderPage;
+  window.renderPage = (...args) => { const r = _renderPage.apply(this, args); schedule(); return r; };
+})();
   
   function openLightbox(dataUrl){
   const overlay = document.createElement('div');
