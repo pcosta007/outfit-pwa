@@ -83,6 +83,13 @@
   .k-lunch{ background:#fb923c; }
   .k-dinner{ background:#f43f5e; }
 
+  .scroll-btn{ position:absolute; top:50%; transform:translateY(-50%); z-index:2; display:none; border:1px solid var(--line); background:#fff; border-radius:10px; padding:8px 10px; }
+  #actsPrev{ left:0; }
+  #actsNext{ right:0; }
+  .scroll-fade{ position:relative; }
+  .scroll-fade::before, .scroll-fade::after{ content:""; position:absolute; top:0; bottom:0; width:30px; pointer-events:none; }
+  .scroll-fade::before{ left:0; background:linear-gradient(90deg,var(--bg),transparent); }
+  .scroll-fade::after{ right:0; background:linear-gradient(270deg,var(--bg),transparent); }
 
   /* Card + hero */
   .section{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px; margin:12px 0; box-shadow:0 1px 0 rgba(15,23,42,.03); }
@@ -227,6 +234,9 @@
     <!-- Activity buttons (swipeable) -->
     <div id="actsSection" class="section" style="padding:0; background:transparent; border:none; box-shadow:none; margin:0 0 8px;">
       <div class="acts-wrap scroll-fade">
+        <button id="actsPrev" class="scroll-btn" aria-label="Prev">‹</button>
+        <div id="acts" class="acts"></div>
+        <button id="actsNext" class="scroll-btn" aria-label="Next">›</button>
       </div>
     </div>
 
@@ -328,11 +338,11 @@
      aria-hidden="true">
   <rect x="2" y="2" width="20" height="20" rx="4" ry="4"/>
   <!-- row 1 -->
-  <path d="M3.5 7.5l2 2 3.5-3.5"/>
-  <path d="M11 12.5h8"/>
+  <path d="M4 7.5l1.6 1.6 3.2-3.2"/>
+  <path d="M10 7.5h9"/>
   <!-- row 2 -->
-  <path d="M3.5 12.5l2 2 3.5-3.5"/>
-  <path d="M11 12.5h8"/>
+  <path d="M4 12.5l1.6 1.6 3.2-3.2"/>
+  <path d="M10 12.5h9"/>
 </svg>
     </span>
     <span class="label">Checklist</span>
@@ -473,6 +483,8 @@ let currentView = 'itinerary'; // 'itinerary' | 'summary' | 'checklist'
 // DOM
 const $dates = document.querySelector('#dates');
 const $acts = document.querySelector('#acts');
+const $actsPrev = document.querySelector('#actsPrev');
+const $actsNext = document.querySelector('#actsNext');
 const $hero = document.querySelector('#hero');
 const $heroImg = document.querySelector('#heroImg');
 const $heroPrev = document.querySelector('#heroPrev');
@@ -536,6 +548,8 @@ function renderActs(){
     b.onclick = ()=>{ activeIdx=idx; renderContent(0); renderActs(); centerActiveBtn(); };
     el.appendChild(b);
   });
+  setupActsScrollControls();
+  centerActiveBtn();
 }
 
 function renderAll(){
@@ -911,34 +925,37 @@ $addItemInput?.addEventListener('keydown', e=>{
 });
   
 // ------------------ Swipe navigation (activities) ------------------
+let sx=null, sy=null;
+window.addEventListener('touchstart', e=>{ const t=e.touches[0]; sx=t.clientX; sy=t.clientY; }, {passive:true});
+window.addEventListener('touchend', e=>{ if(sx==null) return; const t=e.changedTouches[0]; const dx=t.clientX-sx; const dy=t.clientY-sy; sx=sy=null; if (Math.abs(dx)>50 && Math.abs(dy)<80) { if (dx<0) next(); else prev(); } }, {passive:true});
+window.addEventListener('keydown', e=>{ if (e.key==='ArrowRight') next(); if (e.key==='ArrowLeft') prev(); });
 
+// Swipe on the activity button row to change selection (not just scroll)
+(function enableActsSwipe(){
+  let ax=null, ay=null;
+  $acts.addEventListener('touchstart', e=>{ const t=e.touches[0]; ax=t.clientX; ay=t.clientY; }, {passive:true});
+  $acts.addEventListener('touchend', e=>{ if(ax==null) return; const t=e.changedTouches[0]; const dx=t.clientX-ax; const dy=t.clientY-ay; ax=ay=null; if (Math.abs(dx)>50 && Math.abs(dy)<80){ if (dx<0) next(); else prev(); } }, {passive:true});
+})();
 
 function setupActsScrollControls(){
-  // Keep these from throwing if the arrow buttons don't exist or are hidden
-  if ($actsPrev) $actsPrev.style.display = 'none';
-  if ($actsNext) $actsNext.style.display = 'none';
-  // Ensure no fade overlays are applied
-  if ($acts && $acts.parentElement) $acts.parentElement.classList.remove('scroll-fade');
-  }
+  const el = $acts;
+  const overflow = el.scrollWidth > el.clientWidth + 4;
+  $actsPrev.style.display = overflow ? 'block' : 'none';
+  $actsNext.style.display = overflow ? 'block' : 'none';
+  if (overflow) el.parentElement.classList.add('scroll-fade'); else el.parentElement.classList.remove('scroll-fade');
+  $actsPrev.onclick = ()=> el.scrollBy({left: -Math.max(200, el.clientWidth*0.8), behavior:'smooth'});
+  $actsNext.onclick = ()=> el.scrollBy({left: Math.max(200, el.clientWidth*0.8), behavior:'smooth'});
+}
 function centerActiveBtn(){
+  const el = $acts; const btns = el.querySelectorAll('.act-btn');
+  const active = btns[activeIdx]; if (!active) return;
+  const rect = active.getBoundingClientRect(); const parent = el.getBoundingClientRect();
+  const fullyVisible = rect.left >= parent.left && rect.right <= parent.right;
+  if (!fullyVisible){ active.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'}); }
 }
-function next(){
-  // Keep activity navigation working (no day swipe here)
-  const list = TRIP.days[activeDay].activities;
-  if (activeIdx < list.length - 1){
-    activeIdx++;
-    renderActs();
-    renderContent(+1);
-  }
-}
+function next(){ const list=TRIP.days[activeDay].activities; if (activeIdx < list.length-1){ activeIdx++; renderActs(); renderContent(+1); } }
+function prev(){ if (activeIdx>0){ activeIdx--; renderActs(); renderContent(-1); } }
 
-function prev(){
-  if (activeIdx > 0){
-    activeIdx--;
-    renderActs();
-    renderContent(-1);
-  }
-}
 // Downscale captured photo for storage
 function downscaleImage(file, maxDim=1600){
   return new Promise((resolve, reject)=>{
