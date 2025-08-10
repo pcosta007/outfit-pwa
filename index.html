@@ -47,28 +47,10 @@
   }
    
   /* Phone canvas — iPhone 16 Pro logical size ~402×874 CSS px */
-  .wrap{ padding:10px 10px 28px; margin:0 auto; }
+  .wrap{ padding:10px 10px calc(28px + 72px + env(safe-area-inset-bottom)); margin:0 auto; }
   .phone{ max-width:402px; }
   @supports (height: 100dvh){ .phone{ min-height:100dvh; } }
   @supports not (height: 100dvh){ .phone{ min-height:100vh; } }
-
-  /* Top nav tabs (full-width & distinct from date buttons) */
-  .tabs { display:flex; gap:8px; margin-top:6px; }
-  .tab-btn{
-    flex:1;                          /* equal widths */
-    padding:10px 12px;
-    background:#0f172a;              /* solid dark */
-    color:#fff;
-    border:none;                      /* not outlined like dates */
-    border-radius:10px;               /* not pill-shaped */
-    font-size:14px;
-    font-weight:600;
-    text-align:center;
-    cursor:pointer;
-  }
-  .tab-btn.active{ background:#3b82f6; }
-  .tab-btn:hover{ background:#1e293b; }
-  .tab-btn:focus-visible{ outline:2px solid #3b82f6; outline-offset:2px; }
 
   /* Dates row (keep as light pill buttons) */
   .dates{ display:flex; gap:8px; }
@@ -145,7 +127,7 @@
     width: 64px; height: 64px; border-radius: 10px; overflow: hidden;
     background:#f1f5f9; display:flex; align-items:center; justify-content:center;
   }
-  .summary-thumb img { width:100%; height:100%; object-fit: cover; display:block; }
+  .summary-thumb img { width:100%; height:100%; object-fit: cover; display:block; cursor: pointer; }
   .summary-thumb.empty { font-size: 11px; color: var(--muted); }
 
   /* Fullscreen preview */
@@ -164,7 +146,53 @@
   .pack-item .label { font-size:14px; }
   .pack-item .tag { font-size:12px; background:#e2e8f0; color:#0f172a; padding:2px 8px; border-radius:999px; }
   .pack-item .del-btn { border:1px solid var(--line); background:#fff; border-radius:8px; padding:6px 8px; cursor:pointer; }
-</style>
+
+/* Bottom nav */
+.bottom-nav{
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  background: var(--card);
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+  z-index: 10;
+}
+
+/* Make room so content isn't hidden behind the fixed nav */
+.wrap { padding-bottom: 88px; } /* adjust if your nav is taller */
+
+/* Buttons inside the bottom nav */
+.nav-btn{
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 6px 6px;
+  display: grid;
+  justify-items: center;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+/* Icon inherits currentColor */
+.nav-btn .icon{ line-height: 0; }
+
+/* Active state = brand color + bold text (and icon) */
+.nav-btn.active{
+  color: #264864;
+  font-weight: 700;
+}
+
+/* Improved tap targets */
+@media (pointer: coarse){
+  .nav-btn { padding: 10px 6px; }
+}
+   
+ </style>
 </head>
 <body>
 <header>
@@ -264,6 +292,60 @@
     <div id="packList" class="pack-list"></div>
   </div>
 </section>
+
+    <!-- Bottom navigation -->
+<nav id="bottomNav" class="bottom-nav" role="tablist" aria-label="Primary">
+  <!-- Itinerary -->
+  <button class="nav-btn" data-view="itinerary" role="tab" aria-selected="true">
+    <span class="icon" aria-hidden="true">
+      <!-- Lucide Route (inherits currentColor) -->
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22"
+           viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+           aria-hidden="true">
+        <circle cx="6" cy="19" r="3"/>
+        <path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/>
+        <circle cx="18" cy="5" r="3"/>
+      </svg>
+    </span>
+    <span class="label">Itinerary</span>
+  </button>
+
+  <!-- Daily Summary -->
+  <button class="nav-btn" data-view="summary" role="tab" aria-selected="false">
+    <span class="icon" aria-hidden="true">
+      <!-- Lucide Calendar (inherits currentColor) -->
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22"
+           viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+           aria-hidden="true">
+        <path d="M8 2v4"/>
+        <path d="M16 2v4"/>
+        <rect x="3" y="4" width="18" height="18" rx="2"/>
+        <path d="M3 10h18"/>
+      </svg>
+    </span>
+    <span class="label">Daily Summary</span>
+  </button>
+
+  <!-- Checklist -->
+  <button class="nav-btn" data-view="checklist" role="tab" aria-selected="false">
+    <span class="icon" aria-hidden="true">
+      <!-- Checklist icon (rounded rect + 3 checks) -->
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22"
+           viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+           aria-hidden="true">
+        <rect x="2" y="2" width="20" height="20" rx="4" ry="4"/>
+        <path d="M4 7.5l1.6 1.6 3.2-3.2"/><path d="M10 7.5h9"/>
+        <path d="M4 12.5l1.6 1.6 3.2-3.2"/><path d="M10 12.5h9"/>
+        <path d="M4 17.5l1.6 1.6 3.2-3.2"/><path d="M10 17.5h9"/>
+      </svg>
+    </span>
+    <span class="label">Checklist</span>
+  </button>
+</nav>
+    
 </div>
 
   <!-- Fullscreen preview modal -->
@@ -525,29 +607,45 @@ async function renderContent(dir=0){
     const right = document.createElement('div');
     right.className = 'summary-thumbs';
 
-    const itin = document.createElement('div');
-    itin.className = 'summary-thumb';
-    if (itinSrc) {
-      const img = document.createElement('img');
-      img.src = itinSrc;
-      img.alt = 'Activity';
-      itin.appendChild(img);
-    } else {
-      itin.classList.add('empty');
-      itin.textContent = 'No photo';
-    }
+  const itin = document.createElement('div');
+itin.className = 'summary-thumb';
+if (itinSrc) {
+  const img = document.createElement('img');
+  img.src = itinSrc;
+  img.alt = 'Activity photo (tap to view)';
+  img.addEventListener('click', ()=> openLightbox(itinSrc));
+  // keyboard accessibility:
+  itin.tabIndex = 0;
+  itin.setAttribute('role','button');
+  itin.setAttribute('aria-label','Open activity photo');
+  itin.addEventListener('keydown', (e)=>{
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLightbox(itinSrc); }
+  });
+  itin.appendChild(img);
+} else {
+  itin.classList.add('empty');
+  itin.textContent = 'No photo';
+}
 
-    const outfit = document.createElement('div');
-    outfit.className = 'summary-thumb';
-    if (outfitSrc) {
-      const img = document.createElement('img');
-      img.src = outfitSrc;
-      img.alt = 'Outfit';
-      outfit.appendChild(img);
-    } else {
-      outfit.classList.add('empty');
-      outfit.textContent = 'No outfit';
-    }
+  const outfit = document.createElement('div');
+outfit.className = 'summary-thumb';
+if (outfitSrc) {
+  const img = document.createElement('img');
+  img.src = outfitSrc; // this is your dataURL from IndexedDB
+  img.alt = 'Outfit photo (tap to view)';
+  img.addEventListener('click', ()=> openLightbox(outfitSrc));
+  // keyboard accessibility:
+  outfit.tabIndex = 0;
+  outfit.setAttribute('role','button');
+  outfit.setAttribute('aria-label','Open outfit photo');
+  outfit.addEventListener('keydown', (e)=>{
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLightbox(outfitSrc); }
+  });
+  outfit.appendChild(img);
+} else {
+  outfit.classList.add('empty');
+  outfit.textContent = 'No outfit';
+}
 
     right.appendChild(itin);
     right.appendChild(outfit);
@@ -588,14 +686,6 @@ function renderThumbs(key, photos){
   }
 }
 
-  function setActiveTabUI(){
-  const tabs = document.querySelectorAll('#tabs .tab-btn');
-  tabs.forEach(btn=>{
-    const isActive = btn.dataset.view === currentView;
-    btn.classList.toggle('active', isActive);
-    btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
-  });
-}
 
 function renderPage(){
   const datesSec     = document.getElementById('datesSection');
@@ -624,7 +714,7 @@ function renderPage(){
     renderChecklist();    // ← add this line
   }
 
-  setActiveTabUI();
+  setActiveNavUI();
 }
 
 async function renderChecklist(){
@@ -888,11 +978,20 @@ function downscaleImage(file, maxDim=1600){
   });
 } 
 
-(function initTabs(){
-  const tabs = document.getElementById('tabs');
-  if (!tabs) return;
-  tabs.addEventListener('click', (e)=>{
-    const btn = e.target.closest('.tab-btn');
+  function setActiveNavUI(){
+  const btns = document.querySelectorAll('#bottomNav .nav-btn');
+  btns.forEach(btn=>{
+    const isActive = btn.dataset.view === currentView;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+  });
+}
+
+(function initBottomNav(){
+  const nav = document.getElementById('bottomNav');
+  if (!nav) return;
+  nav.addEventListener('click', (e)=>{
+    const btn = e.target.closest('.nav-btn');
     if (!btn) return;
     const next = btn.dataset.view;
     if (next && next !== currentView){
@@ -900,7 +999,7 @@ function downscaleImage(file, maxDim=1600){
       renderPage();
     }
   });
-})();  
+})();
   
 // Init
 (function init(){
