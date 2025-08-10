@@ -181,8 +181,9 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0;
-  padding: 2px 10px calc(2px + env(safe-area-inset-bottom));
-  height: calc(var(--nav-h) + env(safe-area-inset-bottom));  /* ⬅️ explicit height */
+  height: var(--nav-h);                             /* <- fixed bar height */
+  padding: 2px 10px 2px;                           /* base padding */
+  padding-bottom: calc(2px + env(safe-area-inset-bottom)); /* <- paint into safe area */
   z-index: 10;
 }
 
