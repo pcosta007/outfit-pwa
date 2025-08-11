@@ -50,6 +50,8 @@
   /* Phone canvas — iPhone 16 Pro logical size ~402×874 CSS px */
   .wrap{ padding:10px 10px calc(57px + env(safe-area-inset-bottom)); margin:0 auto; }
   .phone{ max-width:402px; }
+  @supports (height: 100dvh){ .phone{ min-height: 100dvh; } }
+  @supports not (height: 100dvh){ .phone{ min-height:100dvh; } }
 
   /* Dates row (keep as light pill buttons) */
   .dates{ display:flex; gap:8px; }
