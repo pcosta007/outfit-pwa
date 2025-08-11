@@ -522,6 +522,16 @@ const BEACH_CAPTIONS = {
   'beach-hopping-2': ["Caló del Moro","Cala Llombards"]
 };
 
+function to12h(t){
+  if (!t) return t;
+  const m = /^(\d{1,2}):(\d{2})$/.exec(t.trim());
+  if (!m) return t;
+  let h = +m[1], min = m[2];
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return `${h}:${min} ${ampm}`;
+}
+  
 // ------------------ Rendering ------------------
 function renderDates(){
   $dates.innerHTML = '';
@@ -551,7 +561,7 @@ function renderActs(){
   list.forEach((a,idx)=>{
     const b = document.createElement('button');
     b.className = 'act-btn' + (idx===activeIdx?' active':'');
-    b.innerHTML = `<div class="title">${a.title}</div><span class="tag ${kindClass(a.kind)}">${kindLabel(a.kind)}</span><div class="time">${a.time}</div>`;
+    b.innerHTML = `<div class="title">${a.title}</div><span class="tag ${kindClass(a.kind)}">${kindLabel(a.kind)}</span><div class="time">${to12h(a.time)}</div>`;
     b.onclick = ()=>{ activeIdx=idx; renderContent(0); renderActs(); centerActiveBtn(); };
     el.appendChild(b);
   });
@@ -568,7 +578,7 @@ function renderAll(){
 async function renderContent(dir=0){
   const list = TRIP.days[activeDay].activities;
   const a = list[activeIdx];
-  $actTitle.textContent = `${a.time} • ${a.title}`;
+  $actTitle.textContent = `${to12h(a.time)} • ${a.title}`;
   $actSub.textContent = a.sub || '';
   $actTag.textContent = kindLabel(a.kind);
   $actTag.className = 'tag ' + kindClass(a.kind);
@@ -609,7 +619,7 @@ async function renderContent(dir=0){
     left.className = 'summary-info';
     left.innerHTML = `
       <div class="summary-title">${a.title}</div>
-      <div class="summary-time">${a.time}</div>
+      <div class="summary-time">${to12h(a.time)}</div>
     `;
 
     const right = document.createElement('div');
