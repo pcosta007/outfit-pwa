@@ -19,10 +19,16 @@
     position:sticky;
     top:0;
     z-index:5;
+    transition: transform 200ms ease;
+    will-change: transform;
     background:var(--card);
     border-bottom:1px solid var(--line);
     padding:10px 12px;
   }
+   header.header--hidden{
+     transform: translateY(-100%);
+   }
+   
   /* Add extra top padding equal to dynamic island */
   @supports (padding-top: env(safe-area-inset-top)) {
     header{ padding-top: calc(10px + env(safe-area-inset-top)); }
@@ -48,7 +54,8 @@
   }
    
   /* Phone canvas — iPhone 16 Pro logical size ~402×874 CSS px */
-  .wrap{ padding:10px 10px calc(28px + 72px + env(safe-area-inset-bottom)); margin:0 auto; }
+  .wrap{ --reserve-b: calc(28px + 72px + env(safe-area-inset-bottom));
+    padding:10px 10px var(--reserve-b); margin:0 auto calc(-1 * var(--reserve-b)); }
   .phone{ max-width:402px; }
 
   /* Dates row (keep as light pill buttons) */
@@ -150,6 +157,18 @@
   .pack-item .tag { font-size:12px; background:#e2e8f0; color:#0f172a; padding:2px 8px; border-radius:999px; }
   .pack-item .del-btn { border:1px solid var(--line); background:#fff; border-radius:8px; padding:6px 8px; cursor:pointer; }
 
+/* ===== Compact header style (Instagram-like) ===== */
+header.header--compact {
+  padding: 6px 12px; /* smaller than default padding */
+  font-size: 0.95em; /* slightly smaller text/logo */
+  transition: padding 0.2s ease, font-size 0.2s ease;
+}
+header.header--compact img,
+header.header--compact svg {
+  height: 80%; /* scale down icons/logos slightly */
+  transition: height 0.2s ease;
+}
+   
 /* Bottom nav */
 .bottom-nav{
   position: fixed;
@@ -987,6 +1006,25 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(console.warn);
   });
 }
+
+let lastY = 0;
+let compact = false;
+let hidden = false;
+window.addEventListener('scroll', () => {
+  const y = window.scrollY;
+  const goingDown = y > lastY;
+  lastY = y;
+
+  const h = document.querySelector('header');
+  if (goingDown && y > 80 && !hidden) {
+    h.classList.add('header--compact'); // or header--hidden if hiding
+    hidden = true;
+  } else if (!goingDown && hidden) {
+    h.classList.remove('header--compact'); // or header--hidden
+    compact = false;
+  }
+}, { passive: true });
+  
 </script>
 </body>
 </html>
