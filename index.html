@@ -54,7 +54,7 @@
   }
    
   /* Phone canvas — iPhone 16 Pro logical size ~402×874 CSS px */
-  .wrap{ --reserve-b: calc(28px + 72px + env(safe-area-inset-bottom));
+  .wrap{ 
     padding:10px 10px var(--reserve-b); margin:0 auto; }
   .phone{ max-width:402px; }
 
@@ -178,7 +178,7 @@ header.header--compact svg {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0;
-  padding: 2px 10px 2px;
+  padding: 2px 10px calc(2px + env(safe-area-inset-bottom));
   z-index: 10;
 }
 
@@ -780,6 +780,18 @@ function renderPage(){
   setActiveNavUI();
 }
 
+function setBottomReserve(){
+  const nav = document.getElementById('bottomNav');
+  const navH = nav ? nav.getBoundingClientRect().height : 0;
+  // 28px = your “breathing room” for gestures; keep or reduce if you want
+  const reserve = 28 + navH;
+  document.documentElement.style.setProperty('--reserve-b', `calc(${reserve}px + env(safe-area-inset-bottom))`);
+}
+
+window.addEventListener('load', setBottomReserve, { once:true });
+window.addEventListener('resize', setBottomReserve);
+window.addEventListener('orientationchange', setBottomReserve);
+  
 // === Allow scroll only when needed (ignores reserved bottom padding) ===
 (function controlPageScroll(){
   const root = document.scrollingElement || document.documentElement;
@@ -800,7 +812,9 @@ function renderPage(){
 
   function update(){
     // Measure document height but discount the artificial bottom padding we added
-    const fits = root.scrollHeight <= (root.clientHeight + 1);
+    const reserved = getReservedBottomPx();
+    const docHeight = root.scrollHeight - reserved;
+    const fits = docHeight <= (root.clientHeight + 1);
     document.documentElement.style.overflowY = fits ? 'hidden' : '';
     document.body.style.overflowY = fits ? 'hidden' : '';
   }
