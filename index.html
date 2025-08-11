@@ -55,7 +55,7 @@
    
   /* Phone canvas — iPhone 16 Pro logical size ~402×874 CSS px */
   .wrap{ --reserve-b: calc(28px + 72px + env(safe-area-inset-bottom));
-    padding:10px 10px var(--reserve-b); margin:0 auto calc(-1 * var(--reserve-b)); }
+    padding:10px 10px var(--reserve-b); margin:0 auto; }
   .phone{ max-width:402px; }
 
   /* Dates row (keep as light pill buttons) */
@@ -182,6 +182,12 @@ header.header--compact svg {
   z-index: 10;
 }
 
+@supports (padding: max(0px)) {
+  .bottom-nav{
+    padding-bottom: max(2px, env(safe-area-inset-bottom)); /* grows only when needed */
+    background-clip: padding-box; /* prevents any bleed showing under */
+  }
+}
 
 /* Buttons inside the bottom nav */
 .nav-btn{
@@ -546,6 +552,16 @@ function kindLabel(k){ return ({travel:'Travel',hotel:'Hotel',activity:'Activity
 function kindClass(k){ return ({travel:'k-travel',hotel:'k-hotel',activity:'k-activity',breakfast:'k-breakfast',lunch:'k-lunch',dinner:'k-dinner'})[k]||'k-activity'; }
 function keyFor(dayId, actId){ return `${dayId}|${actId}`; }
 
+function to12h(t){
+  if (!t) return t;
+  const m = /^(\d{1,2}):(\d{2})$/.exec(t.trim());
+  if (!m) return t;
+  let h = +m[1], min = m[2];
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return `${h}:${min} ${ampm}`;
+}
+
 // Beach captions map
 const BEACH_CAPTIONS = {
   'beach-hopping-1': ["Cala Mondragó","Caló des Burgit","Cala S’amarador"],
@@ -581,7 +597,7 @@ function renderActs(){
   list.forEach((a,idx)=>{
     const b = document.createElement('button');
     b.className = 'act-btn' + (idx===activeIdx?' active':'');
-    b.innerHTML = `<div class="title">${a.title}</div><span class="tag ${kindClass(a.kind)}">${kindLabel(a.kind)}</span><div class="time">${a.time}</div>`;
+    b.innerHTML = `<div class="title">${a.title}</div><span class="tag ${kindClass(a.kind)}">${kindLabel(a.kind)}</span><div class="time">${to12h(a.time)}</div>`;
     b.onclick = ()=>{ activeIdx=idx; renderContent(0); renderActs(); centerActiveBtn(); };
     el.appendChild(b);
   });
@@ -598,7 +614,7 @@ function renderAll(){
 async function renderContent(dir=0){
   const list = TRIP.days[activeDay].activities;
   const a = list[activeIdx];
-  $actTitle.textContent = `${a.time} • ${a.title}`;
+  $actTitle.textContent = `${to12h(a.time)} • ${a.title}`;
   $actSub.textContent = a.sub || '';
   $actTag.textContent = kindLabel(a.kind);
   $actTag.className = 'tag ' + kindClass(a.kind);
@@ -639,7 +655,7 @@ async function renderContent(dir=0){
     left.className = 'summary-info';
     left.innerHTML = `
       <div class="summary-title">${a.title}</div>
-      <div class="summary-time">${a.time}</div>
+      <div class="summary-time">${to12h(a.time)}</div>
     `;
 
     const right = document.createElement('div');
@@ -694,6 +710,15 @@ if (outfitSrc) {
   }
 }
 
+async function renderChecklist(){
+  const section = document.getElementById('checklistSection');
+  if (!section) return;
+
+  // If you already plan to build the list, do it here.
+  // For now, even an empty function prevents the error and lets the nav update:
+  // (Optionally: await getPacklist(); and render it into #packList)
+}  
+  
 function renderThumbs(key, photos){
   $thumbs.innerHTML = '';
   if (!photos.length){
@@ -775,8 +800,7 @@ function renderPage(){
 
   function update(){
     // Measure document height but discount the artificial bottom padding we added
-    const reserved = getReservedBottomPx();
-    const fits = (root.scrollHeight - reserved) <= (root.clientHeight + 1);
+    const fits = root.scrollHeight <= (root.clientHeight + 1);
     document.documentElement.style.overflowY = fits ? 'hidden' : '';
     document.body.style.overflowY = fits ? 'hidden' : '';
   }
