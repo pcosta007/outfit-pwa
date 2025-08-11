@@ -48,12 +48,15 @@
   }
    
   /* Phone canvas — iPhone 16 Pro logical size ~402×874 CSS px */
-:root { --reserve-b: calc(72px + env(safe-area-inset-bottom)); }  
-.wrap{ padding:10px 10px var(--reserve-b); margin:0 auto; }
+:root { --nav-h: 72px; } 
+.wrap{ padding:10px 10px env(safe-area-inset-bottom); margin: 0 auto }
   .phone{ max-width:402px; }
-  @supports (height: 100dvh){ .phone{ min-height:100dvh; } }
-  @supports not (height: 100dvh){ .phone{ min-height:100vh; } }
+  @supports (height: 100dvh){ .phone{ min-height: calc(100dvh - var(--nav-h); } }
+  @supports not (height: 100dvh){ .phone{ min-height: calc(100vh - var(--nav-h)); } }
+  .wrap > :last-child{ margin-bottom: 0; }
 
+   html, body{ overflow-x: hidden; }
+   
   /* Dates row (keep as light pill buttons) */
   .dates{ display:flex; gap:8px; }
   .dates-scroller{ overflow-x:auto; -webkit-overflow-scrolling:touch; padding:2px; }
@@ -361,6 +364,17 @@
   <div id="fs"><img id="fsImg" alt="Preview" /></div>
 
 <script>
+
+function setNavHeightVar(){
+  const nav = document.getElementById('bottomNav');
+  if (!nav) return;
+  const h = Math.ceil(nav.getBoundingClientRect().height);
+  document.documentElement.style.setProperty('--nav-h', h + 'px');
+}
+window.addEventListener('load', setNavHeightVar, { once:true });
+window.addEventListener('resize', setNavHeightVar);
+window.addEventListener('orientationchange', setNavHeightVar);
+  
 // ------------------ Trip data ------------------
 const TRIP = {
   days: {
@@ -1049,6 +1063,22 @@ function downscaleImage(file, maxDim=1600){
     }
   });
 })();
+
+const hook = (name)=>{
+  const fn = window[name];
+  if (typeof fn === 'function') {
+    window[name] = async (...args)=>{
+      const r = await fn(...args);
+      setNavHeightVar(); // keep --nav-h accurate, then the min-height calc stays perfect
+      return r;
+    };
+  }
+};
+['renderPage','renderContent','renderSummary','renderChecklist'].forEach(hook);
+
+Array.from(document.images).forEach(img=>{
+  if (!img.complete) img.addEventListener('load', ()=> setNavHeightVar(), { once:true });
+});
   
 // Init
 (function init(){
