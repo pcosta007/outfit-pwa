@@ -1,4 +1,4 @@
-<!doctype html>
+!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -19,16 +19,10 @@
     position:sticky;
     top:0;
     z-index:5;
-    transition: transform 200ms ease;
-    will-change: transform;
     background:var(--card);
     border-bottom:1px solid var(--line);
     padding:10px 12px;
   }
-   header.header--hidden{
-     transform: translateY(-100%);
-   }
-   
   /* Add extra top padding equal to dynamic island */
   @supports (padding-top: env(safe-area-inset-top)) {
     header{ padding-top: calc(10px + env(safe-area-inset-top)); }
@@ -54,8 +48,7 @@
   }
    
   /* Phone canvas — iPhone 16 Pro logical size ~402×874 CSS px */
-  .wrap{ 
-    padding:10px 10px var(--reserve-b); margin:0 auto; }
+  .wrap{ padding:10px 10px calc(28px + 72px + env(safe-area-inset-bottom)); margin:0 auto; }
   .phone{ max-width:402px; }
 
   /* Dates row (keep as light pill buttons) */
@@ -157,18 +150,6 @@
   .pack-item .tag { font-size:12px; background:#e2e8f0; color:#0f172a; padding:2px 8px; border-radius:999px; }
   .pack-item .del-btn { border:1px solid var(--line); background:#fff; border-radius:8px; padding:6px 8px; cursor:pointer; }
 
-/* ===== Compact header style (Instagram-like) ===== */
-header.header--compact {
-  padding: 6px 12px; /* smaller than default padding */
-  font-size: 0.95em; /* slightly smaller text/logo */
-  transition: padding 0.2s ease, font-size 0.2s ease;
-}
-header.header--compact img,
-header.header--compact svg {
-  height: 80%; /* scale down icons/logos slightly */
-  transition: height 0.2s ease;
-}
-   
 /* Bottom nav */
 .bottom-nav{
   position: fixed;
@@ -182,12 +163,6 @@ header.header--compact svg {
   z-index: 10;
 }
 
-@supports (padding: max(0px)) {
-  .bottom-nav{
-    padding-bottom: max(2px, env(safe-area-inset-bottom)); /* grows only when needed */
-    background-clip: padding-box; /* prevents any bleed showing under */
-  }
-}
 
 /* Buttons inside the bottom nav */
 .nav-btn{
@@ -552,16 +527,6 @@ function kindLabel(k){ return ({travel:'Travel',hotel:'Hotel',activity:'Activity
 function kindClass(k){ return ({travel:'k-travel',hotel:'k-hotel',activity:'k-activity',breakfast:'k-breakfast',lunch:'k-lunch',dinner:'k-dinner'})[k]||'k-activity'; }
 function keyFor(dayId, actId){ return `${dayId}|${actId}`; }
 
-function to12h(t){
-  if (!t) return t;
-  const m = /^(\d{1,2}):(\d{2})$/.exec(t.trim());
-  if (!m) return t;
-  let h = +m[1], min = m[2];
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  h = h % 12 || 12;
-  return `${h}:${min} ${ampm}`;
-}
-
 // Beach captions map
 const BEACH_CAPTIONS = {
   'beach-hopping-1': ["Cala Mondragó","Caló des Burgit","Cala S’amarador"],
@@ -597,7 +562,7 @@ function renderActs(){
   list.forEach((a,idx)=>{
     const b = document.createElement('button');
     b.className = 'act-btn' + (idx===activeIdx?' active':'');
-    b.innerHTML = `<div class="title">${a.title}</div><span class="tag ${kindClass(a.kind)}">${kindLabel(a.kind)}</span><div class="time">${to12h(a.time)}</div>`;
+    b.innerHTML = `<div class="title">${a.title}</div><span class="tag ${kindClass(a.kind)}">${kindLabel(a.kind)}</span><div class="time">${a.time}</div>`;
     b.onclick = ()=>{ activeIdx=idx; renderContent(0); renderActs(); centerActiveBtn(); };
     el.appendChild(b);
   });
@@ -614,7 +579,7 @@ function renderAll(){
 async function renderContent(dir=0){
   const list = TRIP.days[activeDay].activities;
   const a = list[activeIdx];
-  $actTitle.textContent = `${to12h(a.time)} • ${a.title}`;
+  $actTitle.textContent = `${a.time} • ${a.title}`;
   $actSub.textContent = a.sub || '';
   $actTag.textContent = kindLabel(a.kind);
   $actTag.className = 'tag ' + kindClass(a.kind);
@@ -655,7 +620,7 @@ async function renderContent(dir=0){
     left.className = 'summary-info';
     left.innerHTML = `
       <div class="summary-title">${a.title}</div>
-      <div class="summary-time">${to12h(a.time)}</div>
+      <div class="summary-time">${a.time}</div>
     `;
 
     const right = document.createElement('div');
@@ -710,15 +675,6 @@ if (outfitSrc) {
   }
 }
 
-async function renderChecklist(){
-  const section = document.getElementById('checklistSection');
-  if (!section) return;
-
-  // If you already plan to build the list, do it here.
-  // For now, even an empty function prevents the error and lets the nav update:
-  // (Optionally: await getPacklist(); and render it into #packList)
-}  
-  
 function renderThumbs(key, photos){
   $thumbs.innerHTML = '';
   if (!photos.length){
@@ -780,18 +736,6 @@ function renderPage(){
   setActiveNavUI();
 }
 
-function setBottomReserve(){
-  const nav = document.getElementById('bottomNav');
-  const navH = nav ? nav.getBoundingClientRect().height : 0;
-  // 28px = your “breathing room” for gestures; keep or reduce if you want
-  const reserve = 28 + navH;
-  document.documentElement.style.setProperty('--reserve-b', `calc(${reserve}px + env(safe-area-inset-bottom))`);
-}
-
-window.addEventListener('load', setBottomReserve, { once:true });
-window.addEventListener('resize', setBottomReserve);
-window.addEventListener('orientationchange', setBottomReserve);
-  
 // === Allow scroll only when needed (ignores reserved bottom padding) ===
 (function controlPageScroll(){
   const root = document.scrollingElement || document.documentElement;
@@ -813,8 +757,7 @@ window.addEventListener('orientationchange', setBottomReserve);
   function update(){
     // Measure document height but discount the artificial bottom padding we added
     const reserved = getReservedBottomPx();
-    const docHeight = root.scrollHeight - reserved;
-    const fits = docHeight <= (root.clientHeight + 1);
+    const fits = (root.scrollHeight - reserved) <= (root.clientHeight + 1);
     document.documentElement.style.overflowY = fits ? 'hidden' : '';
     document.body.style.overflowY = fits ? 'hidden' : '';
   }
@@ -1044,25 +987,6 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(console.warn);
   });
 }
-
-let lastY = 0;
-let compact = false;
-let hidden = false;
-window.addEventListener('scroll', () => {
-  const y = window.scrollY;
-  const goingDown = y > lastY;
-  lastY = y;
-
-  const h = document.querySelector('header');
-  if (goingDown && y > 80 && !hidden) {
-    h.classList.add('header--compact'); // or header--hidden if hiding
-    hidden = true;
-  } else if (!goingDown && hidden) {
-    h.classList.remove('header--compact'); // or header--hidden
-    compact = false;
-  }
-}, { passive: true });
-  
 </script>
 </body>
 </html>
