@@ -50,6 +50,8 @@
   /* Phone canvas — iPhone 16 Pro logical size ~402×874 CSS px */
   .wrap{ padding:10px 10px calc(28px + 72px + env(safe-area-inset-bottom)); margin:0 auto; }
   .phone{ max-width:402px; }
+  @supports (height: 100dvh){ .phone{ min-height:100dvh; } }
+  @supports not (height: 100dvh){ .phone{ min-height:100vh; } }
 
   /* Dates row (keep as light pill buttons) */
   .dates{ display:flex; gap:8px; }
@@ -192,19 +194,6 @@
 @media (pointer: coarse){
   .nav-btn { padding: 6px 6px; }
 }
-
-/* Stop iOS focus-zoom by keeping controls >=16px */
-input, textarea, select { 
-  font-size: 16px; 
-  line-height: 1.4;
-}
-
-/* Your specific fields */
-.note { font-size: 16px; }           /* the big textarea */
-#addItemInput { font-size: 16px; }   /* the “Add a packing item” input */
-
-/* Optional: discourage Safari from “helpfully” resizing text */
-html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
    
  </style>
 </head>
@@ -736,52 +725,84 @@ function renderPage(){
   setActiveNavUI();
 }
 
-// === Allow scroll only when needed (ignores reserved bottom padding) ===
-(function controlPageScroll(){
-  const root = document.scrollingElement || document.documentElement;
-  const wrap = document.querySelector('.wrap');
-  const bottom = document.getElementById('bottomNav');
+async function renderChecklist(){
+  if (!$packList) return;
+  $packList.innerHTML = '';
 
-  let rafId = null;
-  const schedule = () => {
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = requestAnimationFrame(update);
-  };
+  // 1) Auto items from activities marked packed
+  for (const dayId of Object.keys(TRIP.days)) {
+    const day = TRIP.days[dayId];
+    for (const a of day.activities) {
+      const rec = await getEntry(keyFor(dayId, a.id)) || { packed:false };
+      if (!rec.packed) continue;
 
-  function getReservedBottomPx(){
-    if (!wrap) return 0;
-    const pb = getComputedStyle(wrap).paddingBottom;
-    return Number.parseFloat(pb) || 0;
-  }
+      const item = document.createElement('div');
+      item.className = 'pack-item';
 
-  function update(){
-    // Measure document height but discount the artificial bottom padding we added
-    const reserved = getReservedBottomPx();
-    const fits = (root.scrollHeight - reserved) <= (root.clientHeight + 1);
-    document.documentElement.style.overflowY = fits ? 'hidden' : '';
-    document.body.style.overflowY = fits ? 'hidden' : '';
-  }
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = true;
 
-  window.addEventListener('load', schedule, { once: true });
-  window.addEventListener('resize', schedule);
-  window.addEventListener('orientationchange', schedule);
+      const label = document.createElement('div');
+      label.className = 'label';
+      const dayLabel = TRIP.days[dayId]?.label || dayId;
+      label.textContent = `${dayLabel} – ${a.title} outfit`;
 
-  const mo = new MutationObserver(schedule);
-  mo.observe(document.body, { childList: true, subtree: true, attributes: true });
+      const tag = document.createElement('span');
+      tag.className = 'tag';
+      tag.textContent = 'Itinerary';
 
-  Array.from(document.images).forEach(img=>{
-    if (!img.complete) img.addEventListener('load', schedule, { once:true });
-  });
+      item.appendChild(cb);
+      item.appendChild(label);
+      item.appendChild(tag);
+      $packList.appendChild(item);
 
-  // Hook your render functions so we re-evaluate after content changes
-  const hook = (name)=>{
-    const fn = window[name];
-    if (typeof fn === 'function') {
-      window[name] = async (...args)=>{ const r = await fn(...args); schedule(); return r; };
+      cb.addEventListener('change', async ()=>{
+        const r = await getEntry(keyFor(dayId, a.id)) || { packed:false };
+        r.packed = cb.checked;
+        await putEntry(r);
+      });
     }
-  };
-  ['renderContent','renderSummary','renderChecklist','renderPage'].forEach(hook);
-})();
+  }
+
+  // 2) Custom items persisted under pack|custom
+  const plist = await getPacklist();
+
+  plist.items.forEach(ci=>{
+    const item = document.createElement('div');
+    item.className = 'pack-item';
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = !!ci.checked;
+
+    const label = document.createElement('div');
+    label.className = 'label';
+    label.textContent = ci.text;
+
+    const del = document.createElement('button');
+    del.className = 'del-btn';
+    del.textContent = 'Delete';
+
+    item.appendChild(cb);
+    item.appendChild(label);
+    item.appendChild(del);
+    $packList.appendChild(item);
+
+    cb.addEventListener('change', async ()=>{
+      const l = await getPacklist();
+      const entry = l.items.find(x=>x.id===ci.id);
+      if (entry){ entry.checked = cb.checked; await putPacklist(l); }
+    });
+
+    del.addEventListener('click', async ()=>{
+      const l = await getPacklist();
+      l.items = l.items.filter(x=>x.id!==ci.id);
+      await putPacklist(l);
+      renderChecklist();
+    });
+  });
+}
   
   function openLightbox(dataUrl){
   const overlay = document.createElement('div');
