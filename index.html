@@ -48,7 +48,8 @@
   }
    
   /* Phone canvas — iPhone 16 Pro logical size ~402×874 CSS px */
-  .wrap{ padding:10px 10px calc(28px + 72px + env(safe-area-inset-bottom)); margin:0 auto; }
+:root { --reserve-b: calc(72px + env(safe-area-inset-bottom)); }  
+.wrap{ padding:10px 10px var(--reserve-b); margin:0 auto; }
   .phone{ max-width:402px; }
   @supports (height: 100dvh){ .phone{ min-height:100dvh; } }
   @supports not (height: 100dvh){ .phone{ min-height:100vh; } }
@@ -530,6 +531,47 @@ function to12h(t){
   const ampm = h >= 12 ? 'PM' : 'AM';
   h = h % 12 || 12;
   return `${h}:${min} ${ampm}`;
+}
+
+function setBottomReserve(){
+  const nav = document.getElementById('bottomNav');
+  const h = nav ? Math.ceil(nav.getBoundingClientRect().height) : 0;
+  // A tiny breathing room (6–8px) keeps cards off the nav border without creating scroll
+  const reservePx = Math.max(0, h + 6);
+  document.documentElement.style.setProperty(
+    '--reserve-b',
+    `calc(${reservePx}px + env(safe-area-inset-bottom))`
+  );
+}
+
+function updateScrollLock(){
+  const root = document.scrollingElement || document.documentElement;
+  // If the doc fits in the viewport, disable vertical scrolling
+  const fits = root.scrollHeight <= root.clientHeight + 1;
+  document.documentElement.style.overflowY = fits ? 'hidden' : '';
+  document.body.style.overflowY = fits ? 'hidden' : '';
+}
+
+window.addEventListener('load', setBottomReserve, { once:true });
+window.addEventListener('resize', setBottomReserve);
+window.addEventListener('orientationchange', setBottomReserve);
+
+// ===== Bottom reserve + scroll lock helpers =====
+function setBottomReserve(){
+  const nav = document.getElementById('bottomNav');
+  const h = nav ? Math.ceil(nav.getBoundingClientRect().height) : 0;
+  const reservePx = Math.max(0, h + 6); // tiny cushion
+  document.documentElement.style.setProperty(
+    '--reserve-b',
+    `calc(${reservePx}px + env(safe-area-inset-bottom))`
+  );
+}
+
+function updateScrollLock(){
+  const root = document.scrollingElement || document.documentElement;
+  const fits = root.scrollHeight <= root.clientHeight + 1;
+  document.documentElement.style.overflowY = fits ? 'hidden' : '';
+  document.body.style.overflowY = fits ? 'hidden' : '';
 }
   
 // ------------------ Rendering ------------------
