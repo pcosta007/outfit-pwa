@@ -16,7 +16,7 @@
   *{ box-sizing: border-box; }
   body{ margin:0; background:var(--bg); color:var(--ink); font:16px system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
   header{
-    position:sticky;
+    position:fixed;
     top:0;
     z-index:5;
     background:var(--card);
@@ -48,7 +48,7 @@
   }
    
   /* Phone canvas — iPhone 16 Pro logical size ~402×874 CSS px */
-  .wrap{ padding:10px 10px calc(57px + env(safe-area-inset-bottom)); margin:0 auto; }
+  .wrap{ padding:0 10px 60px; margin:0 auto; }
   .phone{ max-width:402px; }
   @supports (height: 100dvh){ .phone{ min-height: 100dvh; } }
   @supports not (height: 100dvh){ .phone{ min-height:100dvh; } }
@@ -193,6 +193,14 @@
 /* Improved tap targets */
 @media (pointer: coarse){
   .nav-btn { padding: 6px 6px; }
+}
+
+html, body {
+  height: 100dvh;
+  overflow-y: auto; /* Ensures scrollbar only appears when needed */
+}
+body {
+  position: relative; /* Helps with fixed positioning in iOS PWAs */
 }
    
  </style>
@@ -1018,6 +1026,27 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(console.warn);
   });
 }
+
+// Dynamically set paddings based on header and nav heights
+function setDynamicPaddings() {
+  const header = document.querySelector('header');
+  const bottomNav = document.querySelector('.bottom-nav');
+  const wrap = document.querySelector('.wrap');
+  
+  if (header && bottomNav && wrap) {
+    const headerHeight = header.offsetHeight;
+    const navHeight = bottomNav.offsetHeight;
+    
+    wrap.style.paddingTop = `${headerHeight}px`;
+    wrap.style.paddingBottom = `${navHeight}px`;
+  }
+}
+
+// Call on load and resize (for orientation changes)
+window.addEventListener('load', setDynamicPaddings);
+window.addEventListener('resize', setDynamicPaddings);
+setDynamicPaddings(); // Initial call
+  
 </script>
 </body>
 </html>
