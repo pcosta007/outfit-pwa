@@ -430,22 +430,37 @@ const TRIP = {
         "./media/fourseasons_room.jpg"
       ] },
       { id:"checkin-four-seasons", time:"12:30", kind:"hotel", title:"Check-in & room", photos:["./media/fourseasons_3.jpg"] },
+      // Moved from Oct 3 → Oct 1 at 3:00 PM
+      { id:"llum-sal", time:"15:00", kind:"lunch", title:"LLUM I SAL (beachfront)", photos:["./media/sal.jpg"] },
       { id:"shima", time:"20:00", kind:"dinner", title:"Dinner at Shima", photos:["./media/shima.jpg"] }
     ]},
 
     "2025-10-02": { label: "Oct 2", activities: [
       { id:"breakfast-4", time:"08:00", kind:"breakfast", title:"Breakfast", photos:["./media/mel.jpg"] },
-      { id:"alcudia-old", time:"10:00", kind:"activity", title:"Alcúdia Old Town", sub:"Walk & Explore", photos:["./media/oldtown.jpg"] },
-      { id:"port-alcudia", time:"11:30", kind:"activity", title:"Port d’Alcúdia", sub:"Walk & explore", photos:["./media/portalcudia.jpg"] },
-      { id:"lunch-alcudia", time:"12:30", kind:"lunch", title:"Lunch choice", sub:"o96 or La Terraza", photos:["./media/o96.jpg","./media/terraza.jpg"] },
-      { id:"back-hotel", time:"15:00", kind:"activity", title:"Back to hotel" },
-      { id:"dinner-tbd-1", time:"20:00", kind:"dinner", title:"Dinner TBD" }
+      // Renamed & retimed "Back to hotel" → Beach Day at 10:00 with photo
+      { id:"beach-day", time:"10:00", kind:"activity", title:"Beach Day", photos:["./media/fourseasons_4.jpg"] },
+      // Alcúdia Old Town moved to 7:00 PM
+      { id:"alcudia-old", time:"19:00", kind:"activity", title:"Alcúdia Old Town", sub:"Walk & Explore", photos:["./media/oldtown.jpg"] },
+      // Dinner at o96 at 8:30 PM (converted from Lunch choice)
+      { id:"dinner-o96", time:"20:30", kind:"dinner", title:"Dinner at o96", photos:[
+        "./media/o96.jpg",
+        "./media/o96_1.jpg",
+        "./media/o96_2.jpg",
+        "./media/o96_3.jpg",
+        "./media/o96_4.jpg"
+      ] },
+      // Port d’Alcúdia moved to 9:30 PM
+      { id:"port-alcudia", time:"21:30", kind:"activity", title:"Port d’Alcúdia", sub:"Walk & explore", photos:["./media/portalcudia.jpg"] }
     ]},
 
     "2025-10-03": { label: "Oct 3", activities: [
       { id:"breakfast-5", time:"08:00", kind:"breakfast", title:"Breakfast at hotel", photos:["./media/mel.jpg"] },
-      { id:"relax-hotel", time:"10:00", kind:"activity", title:"Relax at hotel", photos:["./media/fourseasons_4.jpg"] },
-      { id:"llum-sal", time:"12:30", kind:"lunch", title:"LLUM I SAL (beachfront)", photos:["./media/sal.jpg"] },
+      // Updated title & photos per request
+      { id:"relax-hotel", time:"10:00", kind:"activity", title:"Private Cabana", photos:[
+        "./media/fourseasons_cabana.webp",
+        "./media/fourseasons_cabana2.jpg"
+      ] },
+      // Removed LLUM I SAL (moved to Oct 1)
       { id:"sunset-formentor", time:"18:45", kind:"activity", title:"Sunset at Mirador Cap de Formentor", photos:["./media/lighthouse.jpg"] },
       { id:"dinner-tbd-2", time:"20:30", kind:"dinner", title:"Dinner TBD" }
     ]},
