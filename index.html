@@ -76,6 +76,19 @@
   .act-btn .time{ color:var(--muted); font-size:12px; }
   .act-btn.active{ border-color:var(--accent); box-shadow:0 0 0 2px rgba(38,72,100,.08) inset; }
 
+  /* Stop iOS focus-zoom by keeping controls >=16px */
+input, textarea, select { 
+  font-size: 16px; 
+  line-height: 1.4;
+}
+
+/* Your specific fields */
+.note { font-size: 16px; }           /* the big textarea */
+#addItemInput { font-size: 16px; }   /* the “Add a packing item” input */
+
+/* Optional: discourage Safari from “helpfully” resizing text */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+   
   /* Tag colors */
   .k-travel{ background:#3b82f6; }
   .k-hotel{ background:#8b5cf6; }
