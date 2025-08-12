@@ -288,6 +288,17 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
             <input type="checkbox" id="packedCheckbox" />
             Packed
           </label>
+          <span style="margin-left:auto;"></span>
+          <!-- instagram button hidden unless link exists -->
+          <a id="igLink"
+             class="btn"
+             href="#"
+             target="_blank"
+             rel="noopener"
+             style="display:none;"
+             aria-label="Open Instagram for this activity">
+          Instagram ↗
+          </a>
       </div>
         <div id="thumbs" class="thumbs"></div>
       </div>
@@ -391,7 +402,7 @@ const TRIP = {
       ] },
       { id:"pool-spa", time:"13:00", kind:"activity", title:"Pool & Spa", sub:"Relax at hotel", photos:["./media/can_ferrereta.jpg"] },
       { id:"walk-town", time:"16:00", kind:"activity", title:"Walk Santanyí town", sub:"Stroll & photos", photos:["./media/santanyi_town.jpg"] },
-      { id:"manique", time:"20:30", kind:"dinner", title:"Dinner: Manique", sub:"Brazilian & Mallorcan", photos:["./media/manique.jpg"] }
+      { id:"manique", time:"20:30", kind:"dinner", title:"Dinner: Manique", sub:"Brazilian & Mallorcan", photos:["./media/manique.jpg"], ig: "https://www.instagram.com/manique.santanyi/?hl=en" }
     ]},
 
     "2025-09-29": { label: "Sep 29", activities: [
@@ -401,13 +412,13 @@ const TRIP = {
         "./media/burgit.jpg",
         "./media/aramador.jpg"
       ] },
-      { id:"tacos-patron", time:"12:00", kind:"lunch", title:"Lunch: Tacos Patrón", photos:["./media/patron.jpg"] },
+      { id:"tacos-patron", time:"12:00", kind:"lunch", title:"Lunch: Tacos Patrón", photos:["./media/patron.jpg"], ig: "https://www.instagram.com/tacospatron_/?hl=en" },
       { id:"marina", time:"13:00", kind:"activity", title:"Walk Cala d’Or marina", photos:["./media/calador.webp"] },
       { id:"cap-rocat", time:"18:00", kind:"dinner", title:"Sea Club at Cap Rocat", photos:[
         "./media/rocat1.jpg",
         "./media/rocat2.jpg",
         "./media/rocat3.jpg"
-      ] }
+      ], ig: "https://www.instagram.com/cap_rocat?igsh=cjJkY2Vic3Y5ZzA0" }
     ]},
 
     "2025-09-30": { label: "Sep 30", activities: [
@@ -416,9 +427,9 @@ const TRIP = {
         "./media/moro.jpg",
         "./media/llombards.jpg"
       ] },
-      { id:"lunch-choice", time:"13:00", kind:"lunch", title:"Lunch choice", sub:"Café Drac or Pura Vida", photos:["./media/drac.jpg","./media/vida.jpg"] },
+      { id:"lunch-choice", time:"13:00", kind:"lunch", title:"Lunch at Cafe Drac", photos:["./media/drac.jpg"], ig:"https://www.instagram.com/cafedrac?igsh=ZzQ4ZXkyY3BodWl1" },
       { id:"spa-pool", time:"15:00", kind:"activity", title:"Spa & pool", photos:["./media/can_ferrereta.jpg"] },
-      { id:"ocre", time:"20:00", kind:"dinner", title:"Dinner at Ocre", photos:["./media/ocre.jpg"] }
+      { id:"ocre", time:"20:00", kind:"dinner", title:"Dinner at Ocre", photos:["./media/ocre.jpg"], ig: "https://www.instagram.com/ocremallorca?igsh=MXhqcmt5MWZyMDRyeA==" }
     ]},
 
     "2025-10-01": { label: "Oct 1", activities: [
@@ -431,7 +442,7 @@ const TRIP = {
       ] },
       { id:"checkin-four-seasons", time:"12:30", kind:"hotel", title:"Check-in & room", photos:["./media/fourseasons_3.jpg"] },
       // Moved from Oct 3 → Oct 1 at 3:00 PM
-      { id:"llum-sal", time:"15:00", kind:"lunch", title:"LLUM I SAL (beachfront)", photos:["./media/sal.jpg"] },
+      { id:"llum-sal", time:"15:00", kind:"lunch", title:"LLUM I SAL (beachfront)", photos:["./media/sal.jpg"], ig:"https://www.instagram.com/llum.i.sal?igsh=MTNoZ3FpazMwNHV6bQ==" },
       { id:"shima", time:"20:00", kind:"dinner", title:"Dinner at Shima", photos:["./media/shima.jpg"] }
     ]},
 
@@ -448,7 +459,7 @@ const TRIP = {
         "./media/o96_2.jpg",
         "./media/o96_3.jpg",
         "./media/o96_4.jpg"
-      ] },
+      ], ig: "https://www.instagram.com/o96mallorca?igsh=MXZjc2RiMW02ZjltNQ==" },
       // Port d’Alcúdia moved to 9:30 PM
       { id:"port-alcudia", time:"21:30", kind:"activity", title:"Port d’Alcúdia", sub:"Walk & explore", photos:["./media/portalcudia.jpg"] }
     ]},
@@ -462,7 +473,7 @@ const TRIP = {
       ] },
       // Removed LLUM I SAL (moved to Oct 1)
       { id:"sunset-formentor", time:"18:45", kind:"activity", title:"Sunset at Mirador Cap de Formentor", photos:["./media/lighthouse.jpg"] },
-      { id:"dinner-tbd-2", time:"20:30", kind:"dinner", title:"Dinner TBD" }
+      { id:"dinner-tbd-2", time:"20:30", kind:"dinner", title:"Casual Dinner at Hotel" }
     ]},
 
     "2025-10-04": { label: "Oct 4", activities: [
@@ -470,10 +481,10 @@ const TRIP = {
       { id:"puro-drop", time:"07:30", kind:"travel", title:"Drive to Palma – Puro Grand (drop bags)", photos:["./media/puro.jpg","./media/puro2.jpg"] },
       { id:"drive-calanova", time:"09:00", kind:"activity", title:"Drive to Calanova Marina", photos:["./media/calanova.jpg"] },
       { id:"boat-charter", time:"10:00", kind:"activity", title:"Private boat charter (10–2)", photos:["./media/blade.jpg"] },
-      { id:"illeta", time:"14:00", kind:"lunch", title:"Lunch at Restaurante Illeta", photos:["./media/illeta.avif"] },
+      { id:"illeta", time:"14:00", kind:"lunch", title:"Lunch at Restaurante Illeta", photos:["./media/illeta.avif"], ig: "https://www.instagram.com/restauranteilleta?igsh=MXBob2JyMHd6bzU4cQ==" },
       { id:"back-puro", time:"16:00", kind:"activity", title:"Back to Puro Grand", photos:["./media/puro2.jpg"] },
       { id:"explore-palma", time:"18:00", kind:"activity", title:"Explore Palma", photos:["./media/palmacity.jpg"] },
-      { id:"el-camino", time:"21:30", kind:"dinner", title:"Dinner at El Camino (tapas)", photos:["./media/camino.jpg"] }
+      { id:"el-camino", time:"21:30", kind:"dinner", title:"Dinner at El Camino (tapas)", photos:["./media/camino.jpg"], ig: "https://www.instagram.com/el_camino_palma?igsh=MWxlZThnc2t6NTczOQ==" }
     ]},
 
     "2025-10-05": { label: "Oct 5", activities: [
@@ -539,6 +550,7 @@ const $packedCheckbox = document.querySelector('#packedCheckbox'); // NEW
 const $packList = document.querySelector('#packList');             // NEW
 const $addItemInput = document.querySelector('#addItemInput');     // NEW
 const $addItemBtn = document.querySelector('#addItemBtn');         // NEW
+const $igLink = document.querySelector('#igLink');
 
 function kindLabel(k){ return ({travel:'Travel',hotel:'Hotel',activity:'Activity',breakfast:'Breakfast',lunch:'Lunch',dinner:'Dinner'})[k]||'Activity'; }
 function kindClass(k){ return ({travel:'k-travel',hotel:'k-hotel',activity:'k-activity',breakfast:'k-breakfast',lunch:'k-lunch',dinner:'k-dinner'})[k]||'k-activity'; }
@@ -618,6 +630,19 @@ async function renderContent(dir=0){
   if ($packedCheckbox) $packedCheckbox.checked = !!rec.packed;
   $note.value = rec.note || '';
   renderThumbs(key, rec.photos||[]);
+
+  const ig = (a.ig) || (rec.ig || null);
+
+  if ($igLink) {
+    if (ig) {
+      $igLink.href = ig;
+      $igLink.style.display = 'inline-block';
+      $igLink.textContent = 'Instagram ↗';
+    } else {
+      $igLink.removeAttribute('href');
+      $igLink.style.display = 'none';
+    }
+  }
 
   const main = document.querySelector('.wrap');
   main.style.setProperty('--dir', dir<0?'-6%':dir>0?'6%':'0');
